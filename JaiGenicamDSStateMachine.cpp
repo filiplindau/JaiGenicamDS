@@ -103,10 +103,6 @@ bool JaiGenicamDS::is_Gain_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool JaiGenicamDS::is_FrameRate_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for FrameRate attribute in Write access.
-	/*----- PROTECTED REGION ID(JaiGenicamDS::FrameRateStateAllowed_WRITE) ENABLED START -----*/
-	
-	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::FrameRateStateAllowed_WRITE
 
 	//	Not any excluded states for FrameRate attribute in read access.
 	/*----- PROTECTED REGION ID(JaiGenicamDS::FrameRateStateAllowed_READ) ENABLED START -----*/
@@ -117,21 +113,21 @@ bool JaiGenicamDS::is_FrameRate_allowed(TANGO_UNUSED(Tango::AttReqType type))
 
 //--------------------------------------------------------
 /**
- *	Method      : JaiGenicamDS::is_ExternalTrigger_allowed()
- *	Description : Execution allowed for ExternalTrigger attribute
+ *	Method      : JaiGenicamDS::is_TriggerSource_allowed()
+ *	Description : Execution allowed for TriggerSource attribute
  */
 //--------------------------------------------------------
-bool JaiGenicamDS::is_ExternalTrigger_allowed(TANGO_UNUSED(Tango::AttReqType type))
+bool JaiGenicamDS::is_TriggerSource_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ExternalTrigger attribute in Write access.
-	/*----- PROTECTED REGION ID(JaiGenicamDS::ExternalTriggerStateAllowed_WRITE) ENABLED START -----*/
+	//	Not any excluded states for TriggerSource attribute in Write access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::TriggerSourceStateAllowed_WRITE) ENABLED START -----*/
 	
-	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ExternalTriggerStateAllowed_WRITE
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::TriggerSourceStateAllowed_WRITE
 
-	//	Not any excluded states for ExternalTrigger attribute in read access.
-	/*----- PROTECTED REGION ID(JaiGenicamDS::ExternalTriggerStateAllowed_READ) ENABLED START -----*/
+	//	Not any excluded states for TriggerSource attribute in read access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::TriggerSourceStateAllowed_READ) ENABLED START -----*/
 	
-	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ExternalTriggerStateAllowed_READ
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::TriggerSourceStateAllowed_READ
 	return true;
 }
 
@@ -148,6 +144,136 @@ bool JaiGenicamDS::is_FrameCounter_allowed(TANGO_UNUSED(Tango::AttReqType type))
 	/*----- PROTECTED REGION ID(JaiGenicamDS::FrameCounterStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::FrameCounterStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : JaiGenicamDS::is_TriggerMode_allowed()
+ *	Description : Execution allowed for TriggerMode attribute
+ */
+//--------------------------------------------------------
+bool JaiGenicamDS::is_TriggerMode_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+	//	Not any excluded states for TriggerMode attribute in Write access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::TriggerModeStateAllowed_WRITE) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::TriggerModeStateAllowed_WRITE
+
+	//	Not any excluded states for TriggerMode attribute in read access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::TriggerModeStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::TriggerModeStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : JaiGenicamDS::is_ImageHeight_allowed()
+ *	Description : Execution allowed for ImageHeight attribute
+ */
+//--------------------------------------------------------
+bool JaiGenicamDS::is_ImageHeight_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+	//	Not any excluded states for ImageHeight attribute in Write access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageHeightStateAllowed_WRITE) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageHeightStateAllowed_WRITE
+
+	//	Not any excluded states for ImageHeight attribute in read access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageHeightStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageHeightStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : JaiGenicamDS::is_ImageWidth_allowed()
+ *	Description : Execution allowed for ImageWidth attribute
+ */
+//--------------------------------------------------------
+bool JaiGenicamDS::is_ImageWidth_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+	//	Not any excluded states for ImageWidth attribute in Write access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageWidthStateAllowed_WRITE) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageWidthStateAllowed_WRITE
+
+	//	Not any excluded states for ImageWidth attribute in read access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageWidthStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageWidthStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : JaiGenicamDS::is_ImageOffsetX_allowed()
+ *	Description : Execution allowed for ImageOffsetX attribute
+ */
+//--------------------------------------------------------
+bool JaiGenicamDS::is_ImageOffsetX_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+	//	Not any excluded states for ImageOffsetX attribute in Write access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageOffsetXStateAllowed_WRITE) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageOffsetXStateAllowed_WRITE
+
+	//	Not any excluded states for ImageOffsetX attribute in read access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageOffsetXStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageOffsetXStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : JaiGenicamDS::is_ImageOffsetY_allowed()
+ *	Description : Execution allowed for ImageOffsetY attribute
+ */
+//--------------------------------------------------------
+bool JaiGenicamDS::is_ImageOffsetY_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+	//	Not any excluded states for ImageOffsetY attribute in Write access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageOffsetYStateAllowed_WRITE) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageOffsetYStateAllowed_WRITE
+
+	//	Not any excluded states for ImageOffsetY attribute in read access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageOffsetYStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageOffsetYStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : JaiGenicamDS::is_PixelFormat_allowed()
+ *	Description : Execution allowed for PixelFormat attribute
+ */
+//--------------------------------------------------------
+bool JaiGenicamDS::is_PixelFormat_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::RUNNING)
+		{
+		/*----- PROTECTED REGION ID(JaiGenicamDS::PixelFormatStateAllowed_WRITE) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::PixelFormatStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
+
+	//	Not any excluded states for PixelFormat attribute in read access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::PixelFormatStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::PixelFormatStateAllowed_READ
 	return true;
 }
 

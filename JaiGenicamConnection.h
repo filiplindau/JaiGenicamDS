@@ -41,9 +41,36 @@ namespace JaiGenicamConnection_ns
 	{
 		string	name;
 		string	type;
+		string	unit;
+		string	description;
 		T		value;
 		T		min_value;
 		T		max_value;
+		bool	valid;
+	};
+
+	struct GenicamEnumEntry
+	{
+		string name;
+		int64_t value;
+	};
+
+
+	struct GenicamGenericNode
+	{
+		string	name;
+		string	type;
+		string	unit;
+		string	description;
+		double	value_d;
+		double	min_value_d;
+		double	max_value_d;
+		int64_t	value_i;
+		int64_t	min_value_i;
+		int64_t	max_value_i;
+		vector<string> enum_names;
+		map<string, int64_t> enum_entry_map;
+		map<int64_t, string> enum_value_map;
 		bool	valid;
 	};
 
@@ -61,7 +88,9 @@ namespace JaiGenicamConnection_ns
 
 		int get_image(uint32_t* width_p, uint32_t* height_p, uint16_t* image_p);
 		int get_image_info(J_tIMAGE_INFO* aq_image_info_p);
+		int get_framecounter(int64_t* value_p);
 		int get_gain(double* value_p);
+		int get_framerate(double* value_p);
 /*		void set_gain();
 		void get_exposuretime();
 		void set_exposuretime();
@@ -74,6 +103,10 @@ namespace JaiGenicamConnection_ns
 		int get_node_value(std::string name, double* value_p);
 		int get_node_value(std::string name, int64_t* value_p);
 		int set_node_value(std::string name, double value);
+
+		int get_node_type(std::string name, std::string* type);
+
+		int get_node_info(std::string name, GenicamGenericNode* generic_node_p);
 
 		void start_capture();
 		void stop_capture();
@@ -119,7 +152,9 @@ namespace JaiGenicamConnection_ns
 		std::string		camera_serial;
 
 		// Image stuff
-		J_tIMAGE_INFO image_buffer;
+		J_tIMAGE_INFO	image_buffer;
+		int64_t			frame_counter;
+		std::vector<double> fps_vector;
 
 		// Nodes
 		GenicamNode<double> exposuretime_node;
@@ -149,10 +184,16 @@ namespace JaiGenicamConnection_ns
 		virtual int get_gain(JaiGenicamConnection* wrapper, double* value_p);
 		virtual int get_image(JaiGenicamConnection* wrapper, uint32_t* width_p, uint32_t* height_p, uint16_t* image_p);
 		virtual int get_image_info(JaiGenicamConnection* wrapper, J_tIMAGE_INFO* aq_image_info_p);
+		virtual int get_framecounter(JaiGenicamConnection* wrapper, int64_t* value_p);
+		virtual int JaiGenicamState::get_framerate(JaiGenicamConnection* wrapper, double* value_p);
 
 		virtual int get_node_value(JaiGenicamConnection* wrapper, std::string name, double* value_p);
 		virtual int get_node_value(JaiGenicamConnection* wrapper, std::string name, int64_t* value_p);
 		virtual int set_node_value(JaiGenicamConnection* wrapper, std::string name, double value);
+
+		virtual int get_node_type(JaiGenicamConnection* wrapper, std::string name, std::string* type);
+
+		virtual int get_node_info(JaiGenicamConnection* wrapper, std::string name, GenicamGenericNode* generic_node_p);
 
 		
 		template<typename T>
@@ -241,6 +282,10 @@ namespace JaiGenicamConnection_ns
 		int get_node_value(JaiGenicamConnection* wrapper, std::string name, int64_t* value_p);
 		int set_node_value(JaiGenicamConnection* wrapper, std::string name, double value);
 
+		int get_node_type(JaiGenicamConnection* wrapper, std::string name, std::string* type);
+
+		int get_node_info(JaiGenicamConnection* wrapper, std::string name, GenicamGenericNode* generic_node_p);
+
 	protected:
 		JaiGenicamConnectedState() {} ;
 
@@ -294,8 +339,18 @@ namespace JaiGenicamConnection_ns
 		template<typename T>
 		int get_node(JaiGenicamConnection* wrapper, GenicamNode<T>* node);
 
+		int get_node_value(JaiGenicamConnection* wrapper, std::string name, double* value_p);
+		int get_node_value(JaiGenicamConnection* wrapper, std::string name, int64_t* value_p);
+		int set_node_value(JaiGenicamConnection* wrapper, std::string name, double value);
+
+		int get_node_type(JaiGenicamConnection* wrapper, std::string name, std::string* type);
+
+		int get_node_info(JaiGenicamConnection* wrapper, std::string name, GenicamGenericNode* generic_node_p);
+
 	protected:
-		JaiGenicamRunningState() {} ;
+		JaiGenicamRunningState() {};
+
+		int execute_start_capture(JaiGenicamConnection* wrapper);
 
 	private:
 		static JaiGenicamRunningState* _instance;

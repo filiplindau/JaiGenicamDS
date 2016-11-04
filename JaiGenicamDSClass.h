@@ -94,29 +94,27 @@ class FrameRateAttrib: public Tango::Attr
 {
 public:
 	FrameRateAttrib():Attr("FrameRate",
-			Tango::DEV_DOUBLE, Tango::READ_WRITE) {};
+			Tango::DEV_DOUBLE, Tango::READ) {};
 	~FrameRateAttrib() {};
 	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
 		{(static_cast<JaiGenicamDS *>(dev))->read_FrameRate(att);}
-	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
-		{(static_cast<JaiGenicamDS *>(dev))->write_FrameRate(att);}
 	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
 		{return (static_cast<JaiGenicamDS *>(dev))->is_FrameRate_allowed(ty);}
 };
 
-//	Attribute ExternalTrigger class definition
-class ExternalTriggerAttrib: public Tango::Attr
+//	Attribute TriggerSource class definition
+class TriggerSourceAttrib: public Tango::Attr
 {
 public:
-	ExternalTriggerAttrib():Attr("ExternalTrigger",
-			Tango::DEV_BOOLEAN, Tango::READ_WRITE) {};
-	~ExternalTriggerAttrib() {};
+	TriggerSourceAttrib():Attr("TriggerSource",
+			Tango::DEV_STRING, Tango::READ_WRITE) {};
+	~TriggerSourceAttrib() {};
 	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
-		{(static_cast<JaiGenicamDS *>(dev))->read_ExternalTrigger(att);}
+		{(static_cast<JaiGenicamDS *>(dev))->read_TriggerSource(att);}
 	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
-		{(static_cast<JaiGenicamDS *>(dev))->write_ExternalTrigger(att);}
+		{(static_cast<JaiGenicamDS *>(dev))->write_TriggerSource(att);}
 	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
-		{return (static_cast<JaiGenicamDS *>(dev))->is_ExternalTrigger_allowed(ty);}
+		{return (static_cast<JaiGenicamDS *>(dev))->is_TriggerSource_allowed(ty);}
 };
 
 //	Attribute FrameCounter class definition
@@ -130,6 +128,96 @@ public:
 		{(static_cast<JaiGenicamDS *>(dev))->read_FrameCounter(att);}
 	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
 		{return (static_cast<JaiGenicamDS *>(dev))->is_FrameCounter_allowed(ty);}
+};
+
+//	Attribute TriggerMode class definition
+class TriggerModeAttrib: public Tango::Attr
+{
+public:
+	TriggerModeAttrib():Attr("TriggerMode",
+			Tango::DEV_STRING, Tango::READ_WRITE) {};
+	~TriggerModeAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->read_TriggerMode(att);}
+	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->write_TriggerMode(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<JaiGenicamDS *>(dev))->is_TriggerMode_allowed(ty);}
+};
+
+//	Attribute ImageHeight class definition
+class ImageHeightAttrib: public Tango::Attr
+{
+public:
+	ImageHeightAttrib():Attr("ImageHeight",
+			Tango::DEV_ULONG, Tango::READ_WRITE) {};
+	~ImageHeightAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->read_ImageHeight(att);}
+	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->write_ImageHeight(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<JaiGenicamDS *>(dev))->is_ImageHeight_allowed(ty);}
+};
+
+//	Attribute ImageWidth class definition
+class ImageWidthAttrib: public Tango::Attr
+{
+public:
+	ImageWidthAttrib():Attr("ImageWidth",
+			Tango::DEV_ULONG, Tango::READ_WRITE) {};
+	~ImageWidthAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->read_ImageWidth(att);}
+	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->write_ImageWidth(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<JaiGenicamDS *>(dev))->is_ImageWidth_allowed(ty);}
+};
+
+//	Attribute ImageOffsetX class definition
+class ImageOffsetXAttrib: public Tango::Attr
+{
+public:
+	ImageOffsetXAttrib():Attr("ImageOffsetX",
+			Tango::DEV_ULONG, Tango::READ_WRITE) {};
+	~ImageOffsetXAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->read_ImageOffsetX(att);}
+	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->write_ImageOffsetX(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<JaiGenicamDS *>(dev))->is_ImageOffsetX_allowed(ty);}
+};
+
+//	Attribute ImageOffsetY class definition
+class ImageOffsetYAttrib: public Tango::Attr
+{
+public:
+	ImageOffsetYAttrib():Attr("ImageOffsetY",
+			Tango::DEV_ULONG, Tango::READ_WRITE) {};
+	~ImageOffsetYAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->read_ImageOffsetY(att);}
+	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->write_ImageOffsetY(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<JaiGenicamDS *>(dev))->is_ImageOffsetY_allowed(ty);}
+};
+
+//	Attribute PixelFormat class definition
+class PixelFormatAttrib: public Tango::Attr
+{
+public:
+	PixelFormatAttrib():Attr("PixelFormat",
+			Tango::DEV_STRING, Tango::READ_WRITE) {};
+	~PixelFormatAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->read_PixelFormat(att);}
+	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->write_PixelFormat(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<JaiGenicamDS *>(dev))->is_PixelFormat_allowed(ty);}
 };
 
 //	Attribute Image class definition

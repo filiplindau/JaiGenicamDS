@@ -39,6 +39,10 @@
 #define JaiGenicamDS_H
 
 #include <tango.h>
+#include <string>
+#include <map>
+#include "JaiGenicamConnection.h"
+
 namespace JaiGenicamConnection_ns
 	{
 		class JaiGenicamConnection;	
@@ -66,6 +70,8 @@ class JaiGenicamDS : public TANGO_BASE_CLASS
 /*----- PROTECTED REGION ID(JaiGenicamDS::Data Members) ENABLED START -----*/
 
 //	Add your own data members
+private:
+	map<std::string, ::JaiGenicamConnection_ns::GenicamGenericNode> node_map;
 
 /*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::Data Members
 
@@ -73,6 +79,33 @@ class JaiGenicamDS : public TANGO_BASE_CLASS
 public:
 	//	serial_number:	Serial number of the camera, used to identify it on the network
 	string	serial_number;
+	//	gain_node_name:	Name of gain node in the camera genicam node tree.
+	//  Normally ``Gain`` or ``GainRaw``.
+	string	gain_node_name;
+	//	exposuretime_node_name:	Name of exposuretime node in camera genicam node tree. 
+	//  Normally ``ExposureTime`` or ``ExposureTimeAbs``
+	string	exposuretime_node_name;
+	//	triggersource_node_name:	Name of trigger source node in camera genicam node tree. 
+	//  Normally ``TriggerSource`
+	string	triggersource_node_name;
+	//	triggermode_node_name:	Name of trigger mode node in camera genicam node tree. 
+	//  Normally ``TriggerMode``
+	string	triggermode_node_name;
+	//	width_node_name:	Name of image width node in camera genicam node tree. 
+	//  Normally ``Width``
+	string	width_node_name;
+	//	height_node_name:	Name of image height node in camera genicam node tree. 
+	//  Normally ``Height``
+	string	height_node_name;
+	//	offsetx_node_name:	Name of image offset x node in camera genicam node tree. 
+	//  Normally ``OffsetX``
+	string	offsetx_node_name;
+	//	offsety_node_name:	Name of image offset y node in camera genicam node tree. 
+	//  Normally ``OffsetY``
+	string	offsety_node_name;
+	//	pixelformat_node_name:	Name of pixelformat node in camera genicam node tree. 
+	//  Normally ``PixelFormat``
+	string	pixelformat_node_name;
 
 	bool	mandatoryNotDefined;
 
@@ -81,8 +114,14 @@ public:
 	Tango::DevDouble	*attr_ExposureTime_read;
 	Tango::DevDouble	*attr_Gain_read;
 	Tango::DevDouble	*attr_FrameRate_read;
-	Tango::DevBoolean	*attr_ExternalTrigger_read;
+	Tango::DevString	*attr_TriggerSource_read;
 	Tango::DevLong64	*attr_FrameCounter_read;
+	Tango::DevString	*attr_TriggerMode_read;
+	Tango::DevULong	*attr_ImageHeight_read;
+	Tango::DevULong	*attr_ImageWidth_read;
+	Tango::DevULong	*attr_ImageOffsetX_read;
+	Tango::DevULong	*attr_ImageOffsetY_read;
+	Tango::DevString	*attr_PixelFormat_read;
 	Tango::DevUShort	*attr_Image_read;
 
 //	Constructors and destructors
@@ -184,18 +223,17 @@ public:
  *	Attr type:	Scalar
  */
 	virtual void read_FrameRate(Tango::Attribute &attr);
-	virtual void write_FrameRate(Tango::WAttribute &attr);
 	virtual bool is_FrameRate_allowed(Tango::AttReqType type);
 /**
- *	Attribute ExternalTrigger related methods
+ *	Attribute TriggerSource related methods
  *	Description: Select if external (true) or internal (false) triggering is to be used.
  *
- *	Data type:	Tango::DevBoolean
+ *	Data type:	Tango::DevString
  *	Attr type:	Scalar
  */
-	virtual void read_ExternalTrigger(Tango::Attribute &attr);
-	virtual void write_ExternalTrigger(Tango::WAttribute &attr);
-	virtual bool is_ExternalTrigger_allowed(Tango::AttReqType type);
+	virtual void read_TriggerSource(Tango::Attribute &attr);
+	virtual void write_TriggerSource(Tango::WAttribute &attr);
+	virtual bool is_TriggerSource_allowed(Tango::AttReqType type);
 /**
  *	Attribute FrameCounter related methods
  *	Description: Counts number of frames captured since starting acquisition. 
@@ -205,6 +243,66 @@ public:
  */
 	virtual void read_FrameCounter(Tango::Attribute &attr);
 	virtual bool is_FrameCounter_allowed(Tango::AttReqType type);
+/**
+ *	Attribute TriggerMode related methods
+ *	Description: 
+ *
+ *	Data type:	Tango::DevString
+ *	Attr type:	Scalar
+ */
+	virtual void read_TriggerMode(Tango::Attribute &attr);
+	virtual void write_TriggerMode(Tango::WAttribute &attr);
+	virtual bool is_TriggerMode_allowed(Tango::AttReqType type);
+/**
+ *	Attribute ImageHeight related methods
+ *	Description: 
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+	virtual void read_ImageHeight(Tango::Attribute &attr);
+	virtual void write_ImageHeight(Tango::WAttribute &attr);
+	virtual bool is_ImageHeight_allowed(Tango::AttReqType type);
+/**
+ *	Attribute ImageWidth related methods
+ *	Description: 
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+	virtual void read_ImageWidth(Tango::Attribute &attr);
+	virtual void write_ImageWidth(Tango::WAttribute &attr);
+	virtual bool is_ImageWidth_allowed(Tango::AttReqType type);
+/**
+ *	Attribute ImageOffsetX related methods
+ *	Description: 
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+	virtual void read_ImageOffsetX(Tango::Attribute &attr);
+	virtual void write_ImageOffsetX(Tango::WAttribute &attr);
+	virtual bool is_ImageOffsetX_allowed(Tango::AttReqType type);
+/**
+ *	Attribute ImageOffsetY related methods
+ *	Description: 
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+	virtual void read_ImageOffsetY(Tango::Attribute &attr);
+	virtual void write_ImageOffsetY(Tango::WAttribute &attr);
+	virtual bool is_ImageOffsetY_allowed(Tango::AttReqType type);
+/**
+ *	Attribute PixelFormat related methods
+ *	Description: 
+ *
+ *	Data type:	Tango::DevString
+ *	Attr type:	Scalar
+ */
+	virtual void read_PixelFormat(Tango::Attribute &attr);
+	virtual void write_PixelFormat(Tango::WAttribute &attr);
+	virtual bool is_PixelFormat_allowed(Tango::AttReqType type);
 /**
  *	Attribute Image related methods
  *	Description: Latest captured image
@@ -263,6 +361,7 @@ public:
 //	Additional Method prototypes
 private:
 	::JaiGenicamConnection_ns::JaiGenicamConnection* camera_connection;
+	void update_attribute_info(std::string genicam_name, std::string tango_attribute_name);
 
 /*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::Additional Method prototypes
 };

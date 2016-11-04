@@ -312,6 +312,129 @@ void JaiGenicamDSClass::set_default_property()
 	}
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "gain_node_name";
+	prop_desc = "Name of gain node in the camera genicam node tree.\nNormally ``Gain`` or ``GainRaw``.";
+	prop_def  = "";
+	vect_data.clear();
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "exposuretime_node_name";
+	prop_desc = "Name of exposuretime node in camera genicam node tree. \nNormally ``ExposureTime`` or ``ExposureTimeAbs``";
+	prop_def  = "";
+	vect_data.clear();
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "triggersource_node_name";
+	prop_desc = "Name of trigger source node in camera genicam node tree. \nNormally ``TriggerSource`";
+	prop_def  = "";
+	vect_data.clear();
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "triggermode_node_name";
+	prop_desc = "Name of trigger mode node in camera genicam node tree. \nNormally ``TriggerMode``";
+	prop_def  = "TriggerMode";
+	vect_data.clear();
+	vect_data.push_back("TriggerMode");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "width_node_name";
+	prop_desc = "Name of image width node in camera genicam node tree. \nNormally ``Width``";
+	prop_def  = "Width";
+	vect_data.clear();
+	vect_data.push_back("Width");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "height_node_name";
+	prop_desc = "Name of image height node in camera genicam node tree. \nNormally ``Height``";
+	prop_def  = "Height";
+	vect_data.clear();
+	vect_data.push_back("Height");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "offsetx_node_name";
+	prop_desc = "Name of image offset x node in camera genicam node tree. \nNormally ``OffsetX``";
+	prop_def  = "OffsetX";
+	vect_data.clear();
+	vect_data.push_back("OffsetX");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "offsety_node_name";
+	prop_desc = "Name of image offset y node in camera genicam node tree. \nNormally ``OffsetY``";
+	prop_def  = "OffsetY";
+	vect_data.clear();
+	vect_data.push_back("OffsetY");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "pixelformat_node_name";
+	prop_desc = "Name of pixelformat node in camera genicam node tree. \nNormally ``PixelFormat``";
+	prop_def  = "PixelFormat";
+	vect_data.clear();
+	vect_data.push_back("PixelFormat");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
 }
 
 //--------------------------------------------------------
@@ -587,34 +710,33 @@ void JaiGenicamDSClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	framerate->set_default_properties(framerate_prop);
 	//	Not Polled
 	framerate->set_disp_level(Tango::OPERATOR);
-	framerate->set_memorized();
-	framerate->set_memorized_init(true);
+	//	Not Memorized
 	att_list.push_back(framerate);
 
-	//	Attribute : ExternalTrigger
-	ExternalTriggerAttrib	*externaltrigger = new ExternalTriggerAttrib();
-	Tango::UserDefaultAttrProp	externaltrigger_prop;
-	externaltrigger_prop.set_description("Select if external (true) or internal (false) triggering is to be used.");
-	externaltrigger_prop.set_label("external trigger");
-	//	unit	not set for ExternalTrigger
-	//	standard_unit	not set for ExternalTrigger
-	//	display_unit	not set for ExternalTrigger
-	//	format	not set for ExternalTrigger
-	//	max_value	not set for ExternalTrigger
-	//	min_value	not set for ExternalTrigger
-	//	max_alarm	not set for ExternalTrigger
-	//	min_alarm	not set for ExternalTrigger
-	//	max_warning	not set for ExternalTrigger
-	//	min_warning	not set for ExternalTrigger
-	//	delta_t	not set for ExternalTrigger
-	//	delta_val	not set for ExternalTrigger
+	//	Attribute : TriggerSource
+	TriggerSourceAttrib	*triggersource = new TriggerSourceAttrib();
+	Tango::UserDefaultAttrProp	triggersource_prop;
+	triggersource_prop.set_description("Select if external (true) or internal (false) triggering is to be used.");
+	triggersource_prop.set_label("external trigger");
+	//	unit	not set for TriggerSource
+	//	standard_unit	not set for TriggerSource
+	//	display_unit	not set for TriggerSource
+	//	format	not set for TriggerSource
+	//	max_value	not set for TriggerSource
+	//	min_value	not set for TriggerSource
+	//	max_alarm	not set for TriggerSource
+	//	min_alarm	not set for TriggerSource
+	//	max_warning	not set for TriggerSource
+	//	min_warning	not set for TriggerSource
+	//	delta_t	not set for TriggerSource
+	//	delta_val	not set for TriggerSource
 	
-	externaltrigger->set_default_properties(externaltrigger_prop);
+	triggersource->set_default_properties(triggersource_prop);
 	//	Not Polled
-	externaltrigger->set_disp_level(Tango::OPERATOR);
-	externaltrigger->set_memorized();
-	externaltrigger->set_memorized_init(true);
-	att_list.push_back(externaltrigger);
+	triggersource->set_disp_level(Tango::OPERATOR);
+	triggersource->set_memorized();
+	triggersource->set_memorized_init(true);
+	att_list.push_back(triggersource);
 
 	//	Attribute : FrameCounter
 	FrameCounterAttrib	*framecounter = new FrameCounterAttrib();
@@ -639,6 +761,156 @@ void JaiGenicamDSClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	framecounter->set_disp_level(Tango::OPERATOR);
 	//	Not Memorized
 	att_list.push_back(framecounter);
+
+	//	Attribute : TriggerMode
+	TriggerModeAttrib	*triggermode = new TriggerModeAttrib();
+	Tango::UserDefaultAttrProp	triggermode_prop;
+	//	description	not set for TriggerMode
+	//	label	not set for TriggerMode
+	//	unit	not set for TriggerMode
+	//	standard_unit	not set for TriggerMode
+	//	display_unit	not set for TriggerMode
+	//	format	not set for TriggerMode
+	//	max_value	not set for TriggerMode
+	//	min_value	not set for TriggerMode
+	//	max_alarm	not set for TriggerMode
+	//	min_alarm	not set for TriggerMode
+	//	max_warning	not set for TriggerMode
+	//	min_warning	not set for TriggerMode
+	//	delta_t	not set for TriggerMode
+	//	delta_val	not set for TriggerMode
+	
+	triggermode->set_default_properties(triggermode_prop);
+	//	Not Polled
+	triggermode->set_disp_level(Tango::OPERATOR);
+	triggermode->set_memorized();
+	triggermode->set_memorized_init(true);
+	att_list.push_back(triggermode);
+
+	//	Attribute : ImageHeight
+	ImageHeightAttrib	*imageheight = new ImageHeightAttrib();
+	Tango::UserDefaultAttrProp	imageheight_prop;
+	//	description	not set for ImageHeight
+	//	label	not set for ImageHeight
+	//	unit	not set for ImageHeight
+	//	standard_unit	not set for ImageHeight
+	//	display_unit	not set for ImageHeight
+	//	format	not set for ImageHeight
+	//	max_value	not set for ImageHeight
+	//	min_value	not set for ImageHeight
+	//	max_alarm	not set for ImageHeight
+	//	min_alarm	not set for ImageHeight
+	//	max_warning	not set for ImageHeight
+	//	min_warning	not set for ImageHeight
+	//	delta_t	not set for ImageHeight
+	//	delta_val	not set for ImageHeight
+	
+	imageheight->set_default_properties(imageheight_prop);
+	//	Not Polled
+	imageheight->set_disp_level(Tango::OPERATOR);
+	imageheight->set_memorized();
+	imageheight->set_memorized_init(true);
+	att_list.push_back(imageheight);
+
+	//	Attribute : ImageWidth
+	ImageWidthAttrib	*imagewidth = new ImageWidthAttrib();
+	Tango::UserDefaultAttrProp	imagewidth_prop;
+	//	description	not set for ImageWidth
+	//	label	not set for ImageWidth
+	//	unit	not set for ImageWidth
+	//	standard_unit	not set for ImageWidth
+	//	display_unit	not set for ImageWidth
+	//	format	not set for ImageWidth
+	//	max_value	not set for ImageWidth
+	//	min_value	not set for ImageWidth
+	//	max_alarm	not set for ImageWidth
+	//	min_alarm	not set for ImageWidth
+	//	max_warning	not set for ImageWidth
+	//	min_warning	not set for ImageWidth
+	//	delta_t	not set for ImageWidth
+	//	delta_val	not set for ImageWidth
+	
+	imagewidth->set_default_properties(imagewidth_prop);
+	//	Not Polled
+	imagewidth->set_disp_level(Tango::OPERATOR);
+	imagewidth->set_memorized();
+	imagewidth->set_memorized_init(true);
+	att_list.push_back(imagewidth);
+
+	//	Attribute : ImageOffsetX
+	ImageOffsetXAttrib	*imageoffsetx = new ImageOffsetXAttrib();
+	Tango::UserDefaultAttrProp	imageoffsetx_prop;
+	//	description	not set for ImageOffsetX
+	//	label	not set for ImageOffsetX
+	//	unit	not set for ImageOffsetX
+	//	standard_unit	not set for ImageOffsetX
+	//	display_unit	not set for ImageOffsetX
+	//	format	not set for ImageOffsetX
+	//	max_value	not set for ImageOffsetX
+	//	min_value	not set for ImageOffsetX
+	//	max_alarm	not set for ImageOffsetX
+	//	min_alarm	not set for ImageOffsetX
+	//	max_warning	not set for ImageOffsetX
+	//	min_warning	not set for ImageOffsetX
+	//	delta_t	not set for ImageOffsetX
+	//	delta_val	not set for ImageOffsetX
+	
+	imageoffsetx->set_default_properties(imageoffsetx_prop);
+	//	Not Polled
+	imageoffsetx->set_disp_level(Tango::OPERATOR);
+	imageoffsetx->set_memorized();
+	imageoffsetx->set_memorized_init(true);
+	att_list.push_back(imageoffsetx);
+
+	//	Attribute : ImageOffsetY
+	ImageOffsetYAttrib	*imageoffsety = new ImageOffsetYAttrib();
+	Tango::UserDefaultAttrProp	imageoffsety_prop;
+	//	description	not set for ImageOffsetY
+	//	label	not set for ImageOffsetY
+	//	unit	not set for ImageOffsetY
+	//	standard_unit	not set for ImageOffsetY
+	//	display_unit	not set for ImageOffsetY
+	//	format	not set for ImageOffsetY
+	//	max_value	not set for ImageOffsetY
+	//	min_value	not set for ImageOffsetY
+	//	max_alarm	not set for ImageOffsetY
+	//	min_alarm	not set for ImageOffsetY
+	//	max_warning	not set for ImageOffsetY
+	//	min_warning	not set for ImageOffsetY
+	//	delta_t	not set for ImageOffsetY
+	//	delta_val	not set for ImageOffsetY
+	
+	imageoffsety->set_default_properties(imageoffsety_prop);
+	//	Not Polled
+	imageoffsety->set_disp_level(Tango::OPERATOR);
+	imageoffsety->set_memorized();
+	imageoffsety->set_memorized_init(true);
+	att_list.push_back(imageoffsety);
+
+	//	Attribute : PixelFormat
+	PixelFormatAttrib	*pixelformat = new PixelFormatAttrib();
+	Tango::UserDefaultAttrProp	pixelformat_prop;
+	//	description	not set for PixelFormat
+	//	label	not set for PixelFormat
+	//	unit	not set for PixelFormat
+	//	standard_unit	not set for PixelFormat
+	//	display_unit	not set for PixelFormat
+	//	format	not set for PixelFormat
+	//	max_value	not set for PixelFormat
+	//	min_value	not set for PixelFormat
+	//	max_alarm	not set for PixelFormat
+	//	min_alarm	not set for PixelFormat
+	//	max_warning	not set for PixelFormat
+	//	min_warning	not set for PixelFormat
+	//	delta_t	not set for PixelFormat
+	//	delta_val	not set for PixelFormat
+	
+	pixelformat->set_default_properties(pixelformat_prop);
+	//	Not Polled
+	pixelformat->set_disp_level(Tango::OPERATOR);
+	pixelformat->set_memorized();
+	pixelformat->set_memorized_init(true);
+	att_list.push_back(pixelformat);
 
 	//	Attribute : Image
 	ImageAttrib	*image = new ImageAttrib();
