@@ -74,6 +74,15 @@ namespace JaiGenicamConnection_ns
 		bool	valid;
 	};
 
+	struct GenicamErrorStruct
+	{
+		string calling_state;
+		string calling_function;
+		string error_message;
+		J_STATUS_TYPE retval;
+	};
+
+
 
 	// Forward declarations
 	class JaiGenicamState;
@@ -163,6 +172,9 @@ namespace JaiGenicamConnection_ns
 		GenicamNode<uint64_t> imagewidth_node;
 		GenicamNode<uint64_t> imageheight_node;
 		GenicamNode<uint64_t> pixelformat_node;
+
+		// Error handling
+		GenicamErrorStruct error_data;
 		
 	};
 
@@ -209,14 +221,19 @@ namespace JaiGenicamConnection_ns
 	class JaiGenicamDisconnectedState : JaiGenicamState
 	{
 	public:
+		
 		static JaiGenicamState* Instance()
 		{
 			if (_instance == NULL)
 			{
+				std::cout << "JaiGenicamDisconnectedState new instance" << std::endl;
 				_instance = new JaiGenicamDisconnectedState;
 			}
+			else
+				std::cout << "JaiGenicamDisconnectedState old instance" << std::endl;
 			return _instance;
 		};
+
 		virtual int enter( JaiGenicamConnection* wrapper );
 		virtual int run( JaiGenicamConnection* wrapper );
 		virtual int connect( JaiGenicamConnection* wrapper );
@@ -234,6 +251,7 @@ namespace JaiGenicamConnection_ns
 	class JaiGenicamInitState : JaiGenicamState
 	{
 	public:
+
 		static JaiGenicamState* Instance()
 		{
 			if (_instance == NULL)
@@ -245,6 +263,7 @@ namespace JaiGenicamConnection_ns
 
 		virtual int enter( JaiGenicamConnection* wrapper );
 		virtual int run( JaiGenicamConnection* wrapper );
+		int JaiGenicamInitState::disable_auto_nodes(JaiGenicamConnection* wrapper);
 
 	protected:
 		JaiGenicamInitState() {} ;
@@ -258,6 +277,7 @@ namespace JaiGenicamConnection_ns
 	class JaiGenicamConnectedState : JaiGenicamState
 	{
 	public:
+
 		static JaiGenicamState* Instance()
 		{
 			if (_instance == NULL)
@@ -298,6 +318,7 @@ namespace JaiGenicamConnection_ns
 	class JaiGenicamFaultState : JaiGenicamState
 	{
 	public:
+
 		static JaiGenicamState* Instance()
 		{
 			if (_instance == NULL)
@@ -310,6 +331,9 @@ namespace JaiGenicamConnection_ns
 		virtual int enter( JaiGenicamConnection* wrapper );
 		virtual int run( JaiGenicamConnection* wrapper );
 
+		int close_camera(JaiGenicamConnection* wrapper);
+		int stop_capture(JaiGenicamConnection* wrapper);
+
 	protected:
 		JaiGenicamFaultState() {} ;
 
@@ -321,6 +345,7 @@ namespace JaiGenicamConnection_ns
 	class JaiGenicamRunningState : JaiGenicamState
 	{
 	public:
+
 		static JaiGenicamState* Instance()
 		{
 			if (_instance == NULL)
@@ -332,6 +357,7 @@ namespace JaiGenicamConnection_ns
 
 		virtual int enter( JaiGenicamConnection* wrapper );
 		virtual int run( JaiGenicamConnection* wrapper );
+		int close_camera(JaiGenicamConnection* wrapper);
 		int start_capture(JaiGenicamConnection* wrapper);
 		int stop_capture(JaiGenicamConnection* wrapper);
 		int connect(JaiGenicamConnection* wrapper);

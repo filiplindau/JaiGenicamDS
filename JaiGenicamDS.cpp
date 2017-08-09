@@ -141,8 +141,9 @@ void JaiGenicamDS::delete_device()
 	//	Delete device allocated objects
 	if (this->camera_connection != NULL)
 	{
-		DEBUG_STREAM << "Deleting camera_connection" << endl;
+		DEBUG_STREAM << "Disconnecting camera_connection" << endl;
 		this->camera_connection->disconnect();
+		DEBUG_STREAM << "Deleting camera_connection" << endl;
 		delete this->camera_connection;
 		this->camera_connection = NULL;
 	}
@@ -1186,23 +1187,32 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 	//attr.set_properties(double_prop);
 	Tango::AttributeConfigList_3* attr_config_list;
 	Tango::AttributeConfig_3* attr_config;
+	Tango::MultiAttribute* multi_attr;
+//	Tango::WAttribute	w_attr;
 	Tango::DevVarStringArray sa;
+	// Generate corba string of the desired tango attribute name:
 	sa.length(1);
 	sa[0] = CORBA::string_dup(tango_attribute_name.c_str());
 
 	DEBUG_STREAM << "------------------------------------------------------" << endl << " ---    Updating attribute info for " << tango_attribute_name << "    ---" << endl;
 	DEBUG_STREAM << "Genicam node: " << generic_node.name << endl;
 	DEBUG_STREAM << "Description: " << generic_node.description << endl;
-	DEBUG_STREAM << "Min value d: " << std::to_string(generic_node.min_value_d).c_str();
-	DEBUG_STREAM << "Max value d: " << std::to_string(generic_node.max_value_d).c_str();
-	DEBUG_STREAM << "------------------------------------------------------" << endl;
+	
+	
+	
 
+	// Get an attribute config list for this attribute (the list will have a length of 1)
 	attr_config_list = this->get_attribute_config_3(sa);
 	
+	// The attribute configuration is in the buffer of this list:
 	attr_config = attr_config_list->get_buffer();
+	// Now we can set the various properties for the attribute
 	attr_config->description = CORBA::string_dup(generic_node.description.c_str());
-	if (generic_node.type == "integer" | generic_node.type == "double")
+	
+	if (generic_node.type == "integer")
 	{
+		DEBUG_STREAM << "Min value i: " << std::to_string(generic_node.min_value_i).c_str();
+		DEBUG_STREAM << "Max value i: " << std::to_string(generic_node.max_value_i).c_str();
 		// Only update min, max if the values are consistent
 		if (generic_node.min_value_d < generic_node.max_value_d)
 		{
@@ -1211,9 +1221,54 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 		}
 		attr_config->unit = CORBA::string_dup(generic_node.unit.c_str());	
 	}
+	else if (generic_node.type == "double")
+	{
+		DEBUG_STREAM << "Min value d: " << std::to_string(generic_node.min_value_d).c_str();
+		DEBUG_STREAM << "Max value d: " << std::to_string(generic_node.max_value_d).c_str();
+		// Get write value to check if the stored value is larger or smaller than the new max and min numbers.
+		// We then need to modify the memorized value to avoid an exception.
+		Tango::DevDouble double_value;
+		Tango::DevDouble new_max_value;
+		Tango::DevDouble new_min_value;
+		multi_attr = this->get_device_attr();
+		multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_write_value(double_value);
+		DEBUG_STREAM << "Write value: " << double_value;
+		DEBUG_STREAM << "Mem value: " << multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value();
+		double_value = stod(multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value());
+		// Only update min, max if the values are consistent
+
+		if (generic_node.min_value_d < generic_node.max_value_d)
+		{
+			if (double_value > generic_node.max_value_d)
+			{
+				multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).set_mem_value(std::to_string(generic_node.max_value_d));
+				new_min_value = generic_node.min_value_d;
+				new_max_value = double_value;
+			}
+			else if (double_value < generic_node.min_value_d)
+			{
+				multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).set_mem_value(std::to_string(generic_node.min_value_d));
+				new_min_value = double_value;
+				new_max_value = generic_node.max_value_d;
+			}
+			else
+			{
+				new_min_value = generic_node.min_value_d;
+				new_max_value = generic_node.max_value_d;
+			}					
+
+			attr_config->min_value = CORBA::string_dup(std::to_string(new_min_value).c_str());
+			attr_config->max_value = CORBA::string_dup(std::to_string(new_max_value).c_str());
+		}
+		attr_config->unit = CORBA::string_dup(generic_node.unit.c_str());	
+	}
+	DEBUG_STREAM << "------------------------------------------------------" << endl;
+
+	// Finally write the config list back:
 	this->set_attribute_config_3(*attr_config_list);
 
 	this->node_map[tango_attribute_name] = generic_node;
+
 	
 }
 
