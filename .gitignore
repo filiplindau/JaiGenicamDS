@@ -3,6 +3,7 @@
 *.lo
 *.o
 *.obj
+obj/*
 
 # Precompiled Headers
 *.gch
@@ -28,6 +29,7 @@
 *.out
 *.app
 
+<<<<<<< HEAD
 # Log files
 *.tlog
 
@@ -35,3 +37,10 @@
 *.sdf
 *.suo
 *.pdb
+=======
+# VS stuff
+*.opensdf
+*.suo
+*.sdf
+*.pdb
+>>>>>>> github/master

@@ -55,7 +55,7 @@ static const char *RcsId = "$Id:  $";
 //  The following table gives the correspondence
 //  between command and method names.
 //
-//  Command name  |  Method name
+//  Command name   |  Method name
 //================================================================
 //  State          |  Inherited (no method)
 //  Status         |  Inherited (no method)
@@ -154,8 +154,13 @@ void JaiGenicamDS::delete_device()
 	//	Delete device allocated objects
 	if (this->camera_connection != NULL)
 	{
+<<<<<<< HEAD
 //		DEBUG_STREAM << "Disconnecting camera_connection" << endl;
 		//this->camera_connection->disconnect();
+=======
+		DEBUG_STREAM << "Disconnecting camera_connection" << endl;
+		this->camera_connection->disconnect();
+>>>>>>> github/master
 		DEBUG_STREAM << "Deleting camera_connection" << endl;
 		delete this->camera_connection;
 		this->camera_connection = NULL;
@@ -304,11 +309,11 @@ void JaiGenicamDS::get_device_property()
 			(static_cast<JaiGenicamDSClass *>(get_device_class()));
 		int	i = -1;
 
-		//	Try to initialize serial_number from class property
+		//	Try to initialize id_number from class property
 		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
 		if (cl_prop.is_empty()==false)	cl_prop  >>  id_number;
 		else {
-			//	Try to initialize serial_number from default device value
+			//	Try to initialize id_number from default device value
 			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
 			if (def_prop.is_empty()==false)	def_prop  >>  id_number;
 		}
@@ -617,12 +622,13 @@ void JaiGenicamDS::write_Gain(Tango::WAttribute &attr)
 	Tango::DevDouble	w_val;
 	attr.get_write_value(w_val);
 	/*----- PROTECTED REGION ID(JaiGenicamDS::write_Gain) ENABLED START -----*/
+	
 	int retval = this->camera_connection->set_node_value(this->gain_node_name, w_val);
 	if (retval != 0)
 	{
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
 	}
-
+	
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::write_Gain
 }
@@ -878,7 +884,7 @@ void JaiGenicamDS::read_ImageWidth(Tango::Attribute &attr)
 		attr.set_value(attr_ImageWidth_read);
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
 	}
-
+	
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::read_ImageWidth
 }
@@ -1268,6 +1274,10 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 	Tango::AttributeConfigList_3* attr_config_list;
 	Tango::AttributeConfig_3* attr_config;
 	Tango::MultiAttribute* multi_attr;
+<<<<<<< HEAD
+=======
+//	Tango::WAttribute	w_attr;
+>>>>>>> github/master
 	Tango::DevVarStringArray sa;
 	// Generate corba string of the desired tango attribute name:
 	sa.length(1);
@@ -1275,14 +1285,25 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 	
 	DEBUG_STREAM << "Genicam node: " << generic_node.name << endl;
 	DEBUG_STREAM << "Description: " << generic_node.description << endl;
+<<<<<<< HEAD
 	DEBUG_STREAM << "Valid: " << generic_node.valid << endl;
 	
 	// Get an attribute config list for this attribute (the list will have a length of 1)
 	attr_config_list = this->get_attribute_config_3(sa);
+=======
+	
+	
+	
+
+	// Get an attribute config list for this attribute (the list will have a length of 1)
+	attr_config_list = this->get_attribute_config_3(sa);
+	
+>>>>>>> github/master
 	// The attribute configuration is in the buffer of this list:
 	attr_config = attr_config_list->get_buffer();
 	// Now we can set the various properties for the attribute
 	attr_config->description = CORBA::string_dup(generic_node.description.c_str());
+<<<<<<< HEAD
 	if (generic_node.type == J_NODE_TYPE::J_IInteger)
 	{
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Min value i: " << std::to_string(generic_node.min_value_i).c_str();
@@ -1312,6 +1333,13 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 		{
 			DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Could not retrieve mem value";
 		}
+=======
+	
+	if (generic_node.type == "integer")
+	{
+		DEBUG_STREAM << "Min value i: " << std::to_string(generic_node.min_value_i).c_str();
+		DEBUG_STREAM << "Max value i: " << std::to_string(generic_node.max_value_i).c_str();
+>>>>>>> github/master
 		// Only update min, max if the values are consistent
 		if (generic_node.min_value_i < generic_node.max_value_i)
 		{
@@ -1320,10 +1348,17 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 		}
 		attr_config->unit = CORBA::string_dup(generic_node.unit.c_str());	
 	}
+<<<<<<< HEAD
 	else if (generic_node.type == J_NODE_TYPE::J_IFloat)
 	{
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Min value d: " << std::to_string(generic_node.min_value_d).c_str();
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Max value d: " << std::to_string(generic_node.max_value_d).c_str();
+=======
+	else if (generic_node.type == "double")
+	{
+		DEBUG_STREAM << "Min value d: " << std::to_string(generic_node.min_value_d).c_str();
+		DEBUG_STREAM << "Max value d: " << std::to_string(generic_node.max_value_d).c_str();
+>>>>>>> github/master
 		// Get write value to check if the stored value is larger or smaller than the new max and min numbers.
 		// We then need to modify the memorized value to avoid an exception.
 		Tango::DevDouble double_value;
@@ -1331,6 +1366,7 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 		Tango::DevDouble new_min_value;
 		multi_attr = this->get_device_attr();
 		multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_write_value(double_value);
+<<<<<<< HEAD
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Write value: " << double_value;
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Mem value: " << multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value();
 		retval = this->camera_connection->set_node_value(genicam_name, (double)double_value);
@@ -1338,6 +1374,10 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 		{
 			ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in set_node_value, returned" << retval << endl;
 		};
+=======
+		DEBUG_STREAM << "Write value: " << double_value;
+		DEBUG_STREAM << "Mem value: " << multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value();
+>>>>>>> github/master
 		double_value = stod(multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value());
 		// Only update min, max if the values are consistent
 
@@ -1366,6 +1406,7 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 		}
 		attr_config->unit = CORBA::string_dup(generic_node.unit.c_str());	
 	}
+<<<<<<< HEAD
 	else if (generic_node.type == J_NODE_TYPE::J_IEnumeration)
 	{
 		std::stringstream desc_stream;
@@ -1390,6 +1431,9 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 		};
 		
 	}
+=======
+	DEBUG_STREAM << "------------------------------------------------------" << endl;
+>>>>>>> github/master
 
 	// Finally write the config list back:
 	this->set_attribute_config_3(*attr_config_list);
