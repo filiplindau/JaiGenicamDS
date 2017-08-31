@@ -55,14 +55,15 @@ static const char *RcsId = "$Id:  $";
 //  The following table gives the correspondence
 //  between command and method names.
 //
-//  Command name  |  Method name
+//  Command name   |  Method name
 //================================================================
-//  State         |  Inherited (no method)
-//  Status        |  Inherited (no method)
-//  start         |  start
-//  stop          |  stop
-//  Off           |  off
-//  On            |  on
+//  State          |  Inherited (no method)
+//  Status         |  Inherited (no method)
+//  start          |  start
+//  stop           |  stop
+//  Off            |  off
+//  On             |  on
+//  GetCameraList  |  get_camera_list
 //================================================================
 
 //================================================================
@@ -102,6 +103,10 @@ JaiGenicamDS::JaiGenicamDS(Tango::DeviceClass *cl, string &s)
 {
 	/*----- PROTECTED REGION ID(JaiGenicamDS::constructor_1) ENABLED START -----*/
 	this->camera_connection = NULL;
+	this->image_buffers_p = NULL;
+	this->image_width_v.clear();
+	this->image_height_v.clear();
+	this->n_buffers = 0;
 	init_device();
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::constructor_1
@@ -112,6 +117,10 @@ JaiGenicamDS::JaiGenicamDS(Tango::DeviceClass *cl, const char *s)
 {
 	/*----- PROTECTED REGION ID(JaiGenicamDS::constructor_2) ENABLED START -----*/
 	this->camera_connection = NULL;
+	this->image_buffers_p = NULL;
+	this->image_width_v.clear();
+	this->image_height_v.clear();
+	this->n_buffers = 0;
 	init_device();
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::constructor_2
@@ -122,6 +131,10 @@ JaiGenicamDS::JaiGenicamDS(Tango::DeviceClass *cl, const char *s, const char *d)
 {
 	/*----- PROTECTED REGION ID(JaiGenicamDS::constructor_3) ENABLED START -----*/
 	this->camera_connection = NULL;
+	this->image_buffers_p = NULL;
+	this->image_width_v.clear();
+	this->image_height_v.clear();
+	this->n_buffers = 0;
 	init_device();
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::constructor_3
@@ -141,11 +154,23 @@ void JaiGenicamDS::delete_device()
 	//	Delete device allocated objects
 	if (this->camera_connection != NULL)
 	{
+//		DEBUG_STREAM << "Disconnecting camera_connection" << endl;
+		//this->camera_connection->disconnect();
 		DEBUG_STREAM << "Deleting camera_connection" << endl;
-		this->camera_connection->disconnect();
 		delete this->camera_connection;
 		this->camera_connection = NULL;
-	}
+		
+	};
+	if (this->image_buffers_p != NULL)
+	{
+		DEBUG_STREAM << "Deleting image buffers" << endl;
+		for (int i=0; i<this->n_buffers; i++)
+		{
+			delete[] this->image_buffers_p[i];
+		};
+		delete[] this->image_buffers_p;
+		this->image_buffers_p = NULL;
+	};	
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::delete_device
 	delete[] attr_ExposureTime_read;
@@ -199,26 +224,39 @@ void JaiGenicamDS::init_device()
 	/*----- PROTECTED REGION ID(JaiGenicamDS::init_device) ENABLED START -----*/
 	
 	//	Initialize device
-	this->camera_connection = new ::JaiGenicamConnection_ns::JaiGenicamConnection(this, this->serial_number);
-	DEBUG_STREAM << "Connecting to camera " << endl;
-	this->camera_connection->connect();
-
-	// This should be done in a separate thread!!
-	while (this->get_state() != Tango::DevState::ON)
+	if (this->camera_connection == NULL)
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	};
+		delete this->camera_connection;
+		this->camera_connection = NULL;
+	}
+	this->camera_connection = new ::JaiGenicamCameraControl_ns::JaiGenicamCameraControl(this->id_number);
+	this->camera_connection->state_changed_signal.connect_member(this, &JaiGenicamDS::update_state);
+	this->camera_connection->status_message_signal.connect_member(this, &JaiGenicamDS::update_status);
+	this->camera_connection->error_signal.connect_member(this, &JaiGenicamDS::update_error);
+	DEBUG_STREAM << "Connecting to camera " << endl;
 
-	this->update_attribute_info(this->gain_node_name, "gain");
-	this->update_attribute_info(this->exposuretime_node_name, "exposuretime");
-	this->update_attribute_info(this->triggermode_node_name, "triggermode");
-	this->update_attribute_info(this->triggersource_node_name, "triggersource");
-	this->update_attribute_info(this->width_node_name, "imagewidth");
-	this->update_attribute_info(this->height_node_name, "imageheight");
-	this->update_attribute_info(this->offsetx_node_name, "imageoffsetx");
-	this->update_attribute_info(this->offsety_node_name, "imageoffsety");
-	this->update_attribute_info(this->pixelformat_node_name, "pixelformat");
-	
+	attribute_info_init_flag = false;
+
+	*attr_ImageHeight_read = 1;
+	*attr_ImageWidth_read = 1;
+	*attr_ExposureTime_read = 0;
+	*attr_Gain_read = 0;
+	*attr_FrameRate_read = 0;
+	*attr_TriggerSource_read = "";
+	*attr_FrameCounter_read = 0;
+	*attr_TriggerMode_read = "";
+
+	this->n_buffers = 2;
+	this->last_lock_buffer_ind = 0;
+	this->image_buffers_p = new uint16_t*[n_buffers];
+	for (int i=0; i<this->n_buffers; i++)
+	{
+		this->image_buffers_p[i] = new uint16_t[4096*4096];
+		this->image_height_v.push_back(-1);
+		this->image_width_v.push_back(-1);
+	};
+	DEBUG_STREAM << "Image buffers created " << endl;
+	this->camera_connection->image_ready_signal.connect_member(this, &JaiGenicamDS::update_image);
 	
 
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::init_device
@@ -242,7 +280,7 @@ void JaiGenicamDS::get_device_property()
 
 	//	Read device properties from database.
 	Tango::DbData	dev_prop;
-	dev_prop.push_back(Tango::DbDatum("serial_number"));
+	dev_prop.push_back(Tango::DbDatum("id_number"));
 	dev_prop.push_back(Tango::DbDatum("gain_node_name"));
 	dev_prop.push_back(Tango::DbDatum("exposuretime_node_name"));
 	dev_prop.push_back(Tango::DbDatum("triggersource_node_name"));
@@ -266,16 +304,16 @@ void JaiGenicamDS::get_device_property()
 			(static_cast<JaiGenicamDSClass *>(get_device_class()));
 		int	i = -1;
 
-		//	Try to initialize serial_number from class property
+		//	Try to initialize id_number from class property
 		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
-		if (cl_prop.is_empty()==false)	cl_prop  >>  serial_number;
+		if (cl_prop.is_empty()==false)	cl_prop  >>  id_number;
 		else {
-			//	Try to initialize serial_number from default device value
+			//	Try to initialize id_number from default device value
 			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
-			if (def_prop.is_empty()==false)	def_prop  >>  serial_number;
+			if (def_prop.is_empty()==false)	def_prop  >>  id_number;
 		}
-		//	And try to extract serial_number value from database
-		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  serial_number;
+		//	And try to extract id_number value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  id_number;
 		//	Property StartDsPath is mandatory, check if has been defined in database.
 		check_mandatory_property(cl_prop, dev_prop[i]);
 
@@ -453,7 +491,7 @@ void JaiGenicamDS::always_executed_hook()
 //--------------------------------------------------------
 void JaiGenicamDS::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 {
-//	DEBUG_STREAM << "JaiGenicamDS::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
+	DEBUG_STREAM << "JaiGenicamDS::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_attr_hardware) ENABLED START -----*/
 	
 	//	Add your own code
@@ -491,7 +529,7 @@ void JaiGenicamDS::read_ExposureTime(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_ExposureTime) ENABLED START -----*/
 	//	Set the attribute value
 	double value;	
-	int retval = this->camera_connection->get_node_value(this->exposuretime_node_name, &value);
+	int retval = this->camera_connection->get_node_value(this->exposuretime_node_name, value);
 	*attr_ExposureTime_read = (Tango::DevDouble)value;
 	if (retval == 0)
 	{
@@ -527,6 +565,7 @@ void JaiGenicamDS::write_ExposureTime(Tango::WAttribute &attr)
 	{
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
 	}
+	DEBUG_STREAM << "camera_connection->set_node_value returned" << endl;
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::write_ExposureTime
 }
@@ -545,14 +584,16 @@ void JaiGenicamDS::read_Gain(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_Gain) ENABLED START -----*/
 	//	Set the attribute value
 	double value;	
-	int retval = this->camera_connection->get_node_value(this->gain_node_name, &value);
-	*attr_Gain_read = (Tango::DevDouble)value;
+	int retval = this->camera_connection->get_node_value(this->gain_node_name, value);
+	DEBUG_STREAM << "JaiGenicamDS::read_Gain retval " << retval << endl;
 	if (retval == 0)
 	{
+		*attr_Gain_read = (Tango::DevDouble)value;
 		attr.set_value(attr_Gain_read);
 	}
 	else
 	{
+		*attr_Gain_read = 10;
 		attr.set_value(attr_Gain_read);
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
 	}
@@ -576,12 +617,13 @@ void JaiGenicamDS::write_Gain(Tango::WAttribute &attr)
 	Tango::DevDouble	w_val;
 	attr.get_write_value(w_val);
 	/*----- PROTECTED REGION ID(JaiGenicamDS::write_Gain) ENABLED START -----*/
+	
 	int retval = this->camera_connection->set_node_value(this->gain_node_name, w_val);
 	if (retval != 0)
 	{
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
 	}
-
+	
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::write_Gain
 }
@@ -600,7 +642,7 @@ void JaiGenicamDS::read_FrameRate(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_FrameRate) ENABLED START -----*/
 	//	Set the attribute value
 	double fps;
-	int retval = this->camera_connection->get_framerate(&fps);
+	int retval = this->camera_connection->get_framerate(fps);
 	*attr_FrameRate_read = (Tango::DevDouble)fps;
 	attr.set_value(attr_FrameRate_read);
 	
@@ -621,7 +663,7 @@ void JaiGenicamDS::read_TriggerSource(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_TriggerSource) ENABLED START -----*/
 	//	Set the attribute value
 	int64_t value;	
-	int retval = this->camera_connection->get_node_value(this->triggersource_node_name, &value);
+	int retval = this->camera_connection->get_node_value(this->triggersource_node_name, value);
 	*attr_TriggerSource_read = (Tango::DevString)this->node_map["triggersource"].enum_value_map[value].c_str();
 	if (retval == 0)
 	{
@@ -659,7 +701,7 @@ void JaiGenicamDS::write_TriggerSource(Tango::WAttribute &attr)
 	{
 		// Yes, then set the corresponding value to the node:
 		w_val_i = this->node_map["triggersource"].enum_entry_map[w_val];
-		int retval = this->camera_connection->set_node_value(this->triggermode_node_name, w_val_i);
+		int retval = this->camera_connection->set_node_value(this->triggersource_node_name, w_val_i);
 		if (retval != 0)
 		{
 			attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
@@ -682,10 +724,17 @@ void JaiGenicamDS::read_FrameCounter(Tango::Attribute &attr)
 	DEBUG_STREAM << "JaiGenicamDS::read_FrameCounter(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_FrameCounter) ENABLED START -----*/
 	//	Set the attribute value
+	/*
 	int64_t fc;
-	int retval = this->camera_connection->get_framecounter(&fc);
+	int retval = this->camera_connection->get_framecounter(fc);
 	*attr_FrameCounter_read = (Tango::DevLong64)fc;
-	attr.set_value(attr_FrameCounter_read);
+	*/
+	int64_t* fc_p = new int64_t;
+	{
+		std::lock_guard<std::mutex> lock(this->attr_mutex);	
+		*fc_p = *attr_FrameCounter_read;
+	};
+	attr.set_value(fc_p, 1, 0, true);
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::read_FrameCounter
 }
@@ -704,7 +753,7 @@ void JaiGenicamDS::read_TriggerMode(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_TriggerMode) ENABLED START -----*/
 	//	Set the attribute value
 	int64_t value;	
-	int retval = this->camera_connection->get_node_value(this->triggermode_node_name, &value);
+	int retval = this->camera_connection->get_node_value(this->triggermode_node_name, value);
 	*attr_TriggerMode_read = (Tango::DevString)this->node_map["triggermode"].enum_value_map[value].c_str();
 	if (retval == 0)
 	{
@@ -766,7 +815,7 @@ void JaiGenicamDS::read_ImageHeight(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_ImageHeight) ENABLED START -----*/
 	//	Set the attribute value
 	int64_t value;	
-	int retval = this->camera_connection->get_node_value(this->height_node_name, &value);
+	int retval = this->camera_connection->get_node_value(this->height_node_name, value);
 	*attr_ImageHeight_read = (Tango::DevULong)value;
 	if (retval == 0)
 	{
@@ -796,7 +845,7 @@ void JaiGenicamDS::write_ImageHeight(Tango::WAttribute &attr)
 	Tango::DevULong	w_val;
 	attr.get_write_value(w_val);
 	/*----- PROTECTED REGION ID(JaiGenicamDS::write_ImageHeight) ENABLED START -----*/
-	int retval = this->camera_connection->set_node_value(this->height_node_name, w_val);
+	int retval = this->camera_connection->set_node_value(this->height_node_name, (int64_t)w_val);
 	if (retval != 0)
 	{
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
@@ -819,7 +868,7 @@ void JaiGenicamDS::read_ImageWidth(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_ImageWidth) ENABLED START -----*/
 	//	Set the attribute value
 	int64_t value;	
-	int retval = this->camera_connection->get_node_value(this->width_node_name, &value);
+	int retval = this->camera_connection->get_node_value(this->width_node_name, value);
 	*attr_ImageWidth_read = (Tango::DevULong)value;
 	if (retval == 0)
 	{
@@ -830,7 +879,7 @@ void JaiGenicamDS::read_ImageWidth(Tango::Attribute &attr)
 		attr.set_value(attr_ImageWidth_read);
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
 	}
-
+	
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::read_ImageWidth
 }
@@ -850,7 +899,7 @@ void JaiGenicamDS::write_ImageWidth(Tango::WAttribute &attr)
 	Tango::DevULong	w_val;
 	attr.get_write_value(w_val);
 	/*----- PROTECTED REGION ID(JaiGenicamDS::write_ImageWidth) ENABLED START -----*/
-	int retval = this->camera_connection->set_node_value(this->width_node_name, w_val);
+	int retval = this->camera_connection->set_node_value(this->width_node_name, (int64_t)w_val);
 	if (retval != 0)
 	{
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
@@ -874,7 +923,7 @@ void JaiGenicamDS::read_ImageOffsetX(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_ImageOffsetX) ENABLED START -----*/
 	//	Set the attribute value
 	int64_t value;	
-	int retval = this->camera_connection->get_node_value(this->offsetx_node_name, &value);
+	int retval = this->camera_connection->get_node_value(this->offsetx_node_name, value);
 	*attr_ImageOffsetX_read = (Tango::DevULong)value;
 	if (retval == 0)
 	{
@@ -903,7 +952,7 @@ void JaiGenicamDS::write_ImageOffsetX(Tango::WAttribute &attr)
 	Tango::DevULong	w_val;
 	attr.get_write_value(w_val);
 	/*----- PROTECTED REGION ID(JaiGenicamDS::write_ImageOffsetX) ENABLED START -----*/
-	int retval = this->camera_connection->set_node_value(this->offsetx_node_name, w_val);
+	int retval = this->camera_connection->set_node_value(this->offsetx_node_name, (int64_t)w_val);
 	if (retval != 0)
 	{
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
@@ -926,7 +975,7 @@ void JaiGenicamDS::read_ImageOffsetY(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_ImageOffsetY) ENABLED START -----*/
 	//	Set the attribute value
 	int64_t value;	
-	int retval = this->camera_connection->get_node_value(this->offsety_node_name, &value);
+	int retval = this->camera_connection->get_node_value(this->offsety_node_name, value);
 	*attr_ImageOffsetY_read = (Tango::DevULong)value;
 	if (retval == 0)
 	{
@@ -956,7 +1005,7 @@ void JaiGenicamDS::write_ImageOffsetY(Tango::WAttribute &attr)
 	Tango::DevULong	w_val;
 	attr.get_write_value(w_val);
 	/*----- PROTECTED REGION ID(JaiGenicamDS::write_ImageOffsetY) ENABLED START -----*/
-	int retval = this->camera_connection->set_node_value(this->offsety_node_name, w_val);
+	int retval = this->camera_connection->set_node_value(this->offsety_node_name, (int64_t)w_val);
 	if (retval != 0)
 	{
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
@@ -979,7 +1028,7 @@ void JaiGenicamDS::read_PixelFormat(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_PixelFormat) ENABLED START -----*/
 	//	Set the attribute value
 	int64_t value;	
-	int retval = this->camera_connection->get_node_value(this->pixelformat_node_name, &value);
+	int retval = this->camera_connection->get_node_value(this->pixelformat_node_name, value);
 	*attr_PixelFormat_read = (Tango::DevString)this->node_map["pixelformat"].enum_value_map[value].c_str();
 	if (retval == 0)
 	{
@@ -1040,37 +1089,47 @@ void JaiGenicamDS::read_Image(Tango::Attribute &attr)
 	DEBUG_STREAM << "JaiGenicamDS::read_Image(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_Image) ENABLED START -----*/
 	//	Set the attribute value
-	uint32_t image_width = 4096;
-	uint32_t image_height = 4096;
-	J_tIMAGE_INFO aq_image_info;
-	int result;
-	result = this->camera_connection->get_image_info(&aq_image_info);
-	if (result < 0)
+		
+	Tango::DevULong width;
+	Tango::DevULong height;
+	int buffer_index;
 	{
-//		ERROR_STREAM << "get_image_info returned " << result << endl;
-		attr.set_value(attr_Image_read, 0, 0);
-		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
-		return;
-	}
-	image_height = aq_image_info.iSizeY;
-	image_width = aq_image_info.iSizeX;
-//	DEBUG_STREAM << "Image dimensions: " << image_width << "x" << image_height << endl;
-//	DEBUG_STREAM << "Image pixel type: " << aq_image_info.iPixelType << endl;
-//	DEBUG_STREAM << "Image size: " << aq_image_info.iImageSize << endl;
-	Tango::DevUShort* attr_Image_read_tmp = new Tango::DevUShort[image_width*image_height];
-	result = this->camera_connection->get_image(&image_width, &image_height, (uint16_t*)attr_Image_read_tmp);
-//	DEBUG_STREAM << "get_image returned " << result << endl;
-	result = 0;
-	if (result == 0)
+		std::lock_guard<std::mutex> lock_a(this->attr_mutex);
+//		width = *this->attr_ImageWidth_read;
+//		height = *this->attr_ImageHeight_read;
+	};
 	{
-		attr.set_value(attr_Image_read_tmp, image_width, image_height, true);
+		std::lock_guard<std::mutex> lock_b(this->buffer_mutex);
+		this->read_lock_buffer_ind = this->last_lock_buffer_ind;
+		buffer_index = this->read_lock_buffer_ind;
+	};
+	width = this->image_width_v[buffer_index];
+	height = this->image_height_v[buffer_index];
+
+	// If width or height is < 0 the image is invalid:
+	if (width > 0)
+	{
+		uint64_t size = height*width;
+		Tango::DevUShort* attr_Image_read_tmp = new Tango::DevUShort[size];
+	//	DEBUG_STREAM << "JaiGenicamDS::read_Image current buffer: " << buffer_index << ", width: " << width << ", height: " << height <<  endl;
+		std::copy(this->image_buffers_p[buffer_index], this->image_buffers_p[buffer_index] + size, attr_Image_read_tmp);
+		{
+			std::lock_guard<std::mutex> lock_b(this->buffer_mutex);
+			this->read_lock_buffer_ind = -1;
+		}
+		attr.set_value(attr_Image_read_tmp, width, height, true);
 	}
 	else
 	{
-		attr.set_value(attr_Image_read, 0, 0);
+		uint64_t size = 1;
+		Tango::DevUShort* attr_Image_read_tmp = new Tango::DevUShort[size];
+		{
+			std::lock_guard<std::mutex> lock_b(this->buffer_mutex);
+			this->read_lock_buffer_ind = -1;
+		}
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
-	}
-	
+		attr.set_value(attr_Image_read_tmp, 1, 1, true);
+	};
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::read_Image
 }
 
@@ -1157,66 +1216,292 @@ void JaiGenicamDS::on()
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::on
 }
+//--------------------------------------------------------
+/**
+ *	Command GetCameraList related method
+ *	Description: 
+ *
+ *	@returns 
+ */
+//--------------------------------------------------------
+Tango::DevVarStringArray *JaiGenicamDS::get_camera_list()
+{
+	Tango::DevVarStringArray *argout;
+	DEBUG_STREAM << "JaiGenicamDS::GetCameraList()  - " << device_name << endl;
+	/*----- PROTECTED REGION ID(JaiGenicamDS::get_camera_list) ENABLED START -----*/
+	
+	//	Add your own code
+	argout = new Tango::DevVarStringArray();
+	
+	std::vector<std::string> cam_list;
+	int retval = this->camera_connection->get_camera_list(cam_list);
+	DEBUG_STREAM << "JaiGenicamDS::GetCameraList() camera list length " << cam_list.size() << endl;
+	if (retval == 0)
+	{
+		argout->length(cam_list.size());
+		for (int i=0; i<cam_list.size(); i++)
+		{
+			DEBUG_STREAM << "JaiGenicamDS::GetCameraList() camera " << i << ": " << cam_list[i] << endl;
+			(*argout)[i] = CORBA::string_dup(cam_list[i].c_str());
+		}
+	}
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::get_camera_list
+	return argout;
+}
 
 /*----- PROTECTED REGION ID(JaiGenicamDS::namespace_ending) ENABLED START -----*/
 
 //	Additional Methods
 void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string tango_attribute_name)
 {
-	::JaiGenicamConnection_ns::GenicamGenericNode generic_node;
-	int retval;
-	retval = this->camera_connection->get_node_info(genicam_name, &generic_node);
-	//Tango::MultiAttribute* attributes_p;
-	//attributes_p = this->get_device_attr();
-	//Tango::Attribute	&attr = attributes_p->get_attr_by_name("gain");
-	//Tango::MultiAttrProp<Tango::DevDouble> double_prop;
-	//attr.get_properties(double_prop);
-	//double_prop.description = generic_node.description;
-	//if (generic_node.type == "double")
-	//{
-	//	double_prop.max_value = generic_node.max_value_d;
-	//	double_prop.min_value = generic_node.min_value_d;
-	//}
-	//else if (generic_node.type == "integer")
-	//{
-	//	double_prop.max_value = generic_node.max_value_i;
-	//	double_prop.min_value = generic_node.min_value_i;
-	//}
+	DEBUG_STREAM << "------------------------------------------------------" << endl << " ---    Updating attribute info for " << tango_attribute_name << "    ---" << endl;
 
-	//attr.set_properties(double_prop);
+	::JaiGenicamCameraControl_ns::GenicamGenericNode generic_node;
+	int retval;
+	retval = this->camera_connection->get_node_info(genicam_name, generic_node);
+	if (retval != 0)
+	{
+		ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in get_node_info, returned" << retval << endl;
+		this->node_map[tango_attribute_name] = generic_node;
+		return;
+	};
+	
 	Tango::AttributeConfigList_3* attr_config_list;
 	Tango::AttributeConfig_3* attr_config;
+	Tango::MultiAttribute* multi_attr;
 	Tango::DevVarStringArray sa;
+	// Generate corba string of the desired tango attribute name:
 	sa.length(1);
 	sa[0] = CORBA::string_dup(tango_attribute_name.c_str());
-
-	DEBUG_STREAM << "------------------------------------------------------" << endl << " ---    Updating attribute info for " << tango_attribute_name << "    ---" << endl;
+	
 	DEBUG_STREAM << "Genicam node: " << generic_node.name << endl;
 	DEBUG_STREAM << "Description: " << generic_node.description << endl;
-	DEBUG_STREAM << "Min value d: " << std::to_string(generic_node.min_value_d).c_str();
-	DEBUG_STREAM << "Max value d: " << std::to_string(generic_node.max_value_d).c_str();
-	DEBUG_STREAM << "------------------------------------------------------" << endl;
-
-	attr_config_list = this->get_attribute_config_3(sa);
+	DEBUG_STREAM << "Valid: " << generic_node.valid << endl;
 	
+	// Get an attribute config list for this attribute (the list will have a length of 1)
+	attr_config_list = this->get_attribute_config_3(sa);
+	// The attribute configuration is in the buffer of this list:
 	attr_config = attr_config_list->get_buffer();
+	// Now we can set the various properties for the attribute
 	attr_config->description = CORBA::string_dup(generic_node.description.c_str());
-	if (generic_node.type == "integer" | generic_node.type == "double")
+	if (generic_node.type == J_NODE_TYPE::J_IInteger)
 	{
+		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Min value i: " << std::to_string(generic_node.min_value_i).c_str();
+		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Max value i: " << std::to_string(generic_node.max_value_i).c_str();
+
+		Tango::DevLong int_value;
+		Tango::DevLong mem_value;
+		Tango::DevLong new_max_value;
+		Tango::DevLong new_min_value;
+		multi_attr = this->get_device_attr();
+		multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_write_value(int_value);
+		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Write value: " << int_value;
+		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Mem value: " << multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value();
+		try
+		{
+			mem_value = std::stoi(multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value());
+			if (generic_node.min_value_i <= mem_value && generic_node.max_value_i >= mem_value)
+			{
+				retval = this->camera_connection->set_node_value(genicam_name, (int64_t)mem_value);
+				if (retval != 0)
+				{
+					ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in set_node_value, returned" << retval << endl;
+				};
+			};
+		}
+		catch (...)
+		{
+			DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Could not retrieve mem value";
+		}
 		// Only update min, max if the values are consistent
-		if (generic_node.min_value_d < generic_node.max_value_d)
+		if (generic_node.min_value_i < generic_node.max_value_i)
 		{
 			attr_config->min_value = CORBA::string_dup(std::to_string(generic_node.min_value_i).c_str());
 			attr_config->max_value = CORBA::string_dup(std::to_string(generic_node.max_value_i).c_str());
 		}
 		attr_config->unit = CORBA::string_dup(generic_node.unit.c_str());	
 	}
+	else if (generic_node.type == J_NODE_TYPE::J_IFloat)
+	{
+		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Min value d: " << std::to_string(generic_node.min_value_d).c_str();
+		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Max value d: " << std::to_string(generic_node.max_value_d).c_str();
+		// Get write value to check if the stored value is larger or smaller than the new max and min numbers.
+		// We then need to modify the memorized value to avoid an exception.
+		Tango::DevDouble double_value;
+		Tango::DevDouble new_max_value;
+		Tango::DevDouble new_min_value;
+		multi_attr = this->get_device_attr();
+		multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_write_value(double_value);
+		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Write value: " << double_value;
+		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Mem value: " << multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value();
+		retval = this->camera_connection->set_node_value(genicam_name, (double)double_value);
+		if (retval != 0)
+		{
+			ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in set_node_value, returned" << retval << endl;
+		};
+		double_value = stod(multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value());
+		// Only update min, max if the values are consistent
+
+		if (generic_node.min_value_d < generic_node.max_value_d)
+		{
+			if (double_value > generic_node.max_value_d)
+			{
+				multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).set_mem_value(std::to_string(generic_node.max_value_d));
+				new_min_value = generic_node.min_value_d;
+				new_max_value = double_value;
+			}
+			else if (double_value < generic_node.min_value_d)
+			{
+				multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).set_mem_value(std::to_string(generic_node.min_value_d));
+				new_min_value = double_value;
+				new_max_value = generic_node.max_value_d;
+			}
+			else
+			{
+				new_min_value = generic_node.min_value_d;
+				new_max_value = generic_node.max_value_d;
+			}					
+
+			attr_config->min_value = CORBA::string_dup(std::to_string(new_min_value).c_str());
+			attr_config->max_value = CORBA::string_dup(std::to_string(new_max_value).c_str());
+		}
+		attr_config->unit = CORBA::string_dup(generic_node.unit.c_str());	
+	}
+	else if (generic_node.type == J_NODE_TYPE::J_IEnumeration)
+	{
+		std::stringstream desc_stream;
+		for (auto s : generic_node.enum_names)
+		{
+			desc_stream << s << ", ";
+		};
+		attr_config->unit = CORBA::string_dup(desc_stream.str().c_str());
+		// Get write value to check if the stored value is larger or smaller than the new max and min numbers.
+		// We then need to modify the memorized value to avoid an exception.
+		Tango::DevString string_value;
+		std::string mem_value;
+		multi_attr = this->get_device_attr();
+		multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_write_value(string_value);
+		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Write value: " << string_value;
+		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Mem value: " << multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value();
+		mem_value = multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value().c_str();
+		retval = this->camera_connection->set_node_value(genicam_name, mem_value);
+		if (retval != 0)
+		{
+			ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in set_node_value, returned" << retval << endl;
+		};
+		
+	}
+
+	// Finally write the config list back:
 	this->set_attribute_config_3(*attr_config_list);
 
 	this->node_map[tango_attribute_name] = generic_node;
-	
-}
 
+	
+} // JaiGenicamDS::update_attribute_info
+
+
+void JaiGenicamDS::update_state(::JaiGenicamCameraControl_ns::CameraState camera_state)
+{
+	DEBUG_STREAM << "Entering update_state" << endl;
+	switch (camera_state)
+	{
+	case ::JaiGenicamCameraControl_ns::CameraState::UNKNOWN_STATE:
+		this->set_state(Tango::UNKNOWN);
+		break;
+	case ::JaiGenicamCameraControl_ns::CameraState::INIT_STATE:
+		this->set_state(Tango::INIT);
+		break;
+	case ::JaiGenicamCameraControl_ns::CameraState::DISCONNECTED_STATE:
+		this->set_state(Tango::OFF);
+		break;
+	case ::JaiGenicamCameraControl_ns::CameraState::IDLE_STATE:
+		this->set_state(Tango::ON);
+		if (this->attribute_info_init_flag == false)
+		{
+			std::string tango_attribute_name;
+						
+			tango_attribute_name = this->gain_node_name;
+			this->update_attribute_info(tango_attribute_name, "gain");
+			
+			this->update_attribute_info(this->exposuretime_node_name, "exposuretime");
+			this->update_attribute_info(this->triggermode_node_name, "triggermode");
+			this->update_attribute_info(this->triggersource_node_name, "triggersource");
+			this->update_attribute_info(this->width_node_name, "imagewidth");
+			this->update_attribute_info(this->height_node_name, "imageheight");			
+			this->update_attribute_info(this->offsetx_node_name, "imageoffsetx");			
+			this->update_attribute_info(this->offsety_node_name, "imageoffsety");
+			this->update_attribute_info(this->pixelformat_node_name, "pixelformat");
+			
+			this->attribute_info_init_flag = true;
+		};
+
+		break;
+	case ::JaiGenicamCameraControl_ns::CameraState::RUNNING_STATE:
+		this->set_state(Tango::RUNNING);
+		break;
+	case ::JaiGenicamCameraControl_ns::CameraState::FAULT_STATE:
+		this->set_state(Tango::FAULT);
+		break;
+	};
+}; // JaiGenicamDS::update_state
+
+
+void JaiGenicamDS::update_status(std::string camera_status)
+{
+	DEBUG_STREAM << "update_status: " << camera_status << endl;
+	this->set_status(camera_status);
+}; // JaiGenicamDS::update_status
+
+
+void JaiGenicamDS::update_error(::JaiGenicamCameraControl_ns::GenicamErrorStruct error_data)
+{
+	ERROR_STREAM << "update_error: In state " << error_data.state_string << ", calling function " << error_data.calling_function << ", camera function " << error_data.camera_function << 
+		" failed with error: " << error_data.error_message << ". Error code: " << error_data.retval << std::endl;
+	std::stringstream error_origin;
+	error_origin << "In state " << error_data.calling_state << ", calling function " << error_data.calling_function << ", camera function " << error_data.camera_function;
+	if (this->get_state() != Tango::DevState::INIT)
+	{
+//		Tango::Except::throw_exception("HARDWARE_FAILURE", error_data.error_message, error_origin.str());
+	};
+	
+}; // JaiGenicamDS::update_error
+
+
+void JaiGenicamDS::update_image(int framecounter)
+{
+//	DEBUG_STREAM << "update_image entering..." << endl;
+	uint32_t width;
+	uint32_t height;
+	uint16_t* image_p;
+	int retval;
+	int next_buffer_ind;
+	// Double buffering scheme: Lock mutex for buffer lock, determine if read_image is reading the buffer, use this
+	// to determine which buffer should be written to. Release lock and write the buffer.
+	{
+		std::lock_guard<std::mutex> lock_b(this->buffer_mutex);
+		next_buffer_ind = this->last_lock_buffer_ind;
+		next_buffer_ind = (next_buffer_ind + 1) % this->n_buffers;
+		while (next_buffer_ind == this->read_lock_buffer_ind)
+		{
+			next_buffer_ind = (next_buffer_ind + 1) % this->n_buffers;
+		}
+		this->write_lock_buffer_ind = next_buffer_ind;
+	};
+	retval = this->camera_connection->get_image(width, height, this->image_buffers_p[next_buffer_ind]);
+	this->image_height_v[next_buffer_ind] = height;
+	this->image_width_v[next_buffer_ind] = width;
+	{
+		std::lock_guard<std::mutex> lock_a(this->attr_mutex);
+		*this->attr_FrameCounter_read = framecounter;
+	};
+	{
+		std::lock_guard<std::mutex> lock_b(this->buffer_mutex);
+		this->last_lock_buffer_ind = this->write_lock_buffer_ind;
+		this->write_lock_buffer_ind = -1;
+	};
+//	DEBUG_STREAM << "update_image exit" << endl;
+}; // JaiGenicamDS::update_image
 
 /*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::namespace_ending
 } //	namespace

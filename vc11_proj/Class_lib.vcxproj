@@ -176,16 +176,21 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\JaiGenicamCameraControl.cpp" />
+    <ClCompile Include="..\JaiGenicamCameraControlCameraAccess.cpp" />
+    <ClCompile Include="..\JaiGenicamCameraControlStateHandlers.cpp" />
     <ClCompile Include="..\JaiGenicamConnection.cpp" />
     <ClCompile Include="..\JaiGenicamDS.cpp" />
     <ClCompile Include="..\JaiGenicamDSClass.cpp" />
     <ClCompile Include="..\JaiGenicamDSStateMachine.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\JaiGenicamCameraControl.h" />
     <ClInclude Include="..\JaiGenicamConnection.h" />
     <ClInclude Include="..\JaiGenicamDS.h">
     </ClInclude>
     <ClInclude Include="..\JaiGenicamDSClass.h" />
+    <ClInclude Include="..\Signal.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -230,6 +230,23 @@ CORBA::Any *OnClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA
 	return new CORBA::Any();
 }
 
+//--------------------------------------------------------
+/**
+ * method : 		GetCameraListClass::execute()
+ * description : 	method to trigger the execution of the command.
+ *
+ * @param	device	The device on which the command must be executed
+ * @param	in_any	The command input data
+ *
+ *	returns The command output data (packed in the Any object)
+ */
+//--------------------------------------------------------
+CORBA::Any *GetCameraListClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
+{
+	cout2 << "GetCameraListClass::execute(): arrived" << endl;
+	return insert((static_cast<JaiGenicamDS *>(device))->get_camera_list());
+}
+
 
 //===================================================================
 //	Properties management
@@ -299,8 +316,8 @@ void JaiGenicamDSClass::set_default_property()
 	//	Set Default Class Properties
 
 	//	Set Default device Properties
-	prop_name = "serial_number";
-	prop_desc = "Serial number of the camera, used to identify it on the network";
+	prop_name = "id_number";
+	prop_desc = "Id of the camera, used to identify it on the network. \nType ip address or serial number of the camera.";
 	prop_def  = "";
 	vect_data.clear();
 	if (prop_def.length()>0)
@@ -995,6 +1012,15 @@ void JaiGenicamDSClass::command_factory()
 			"",
 			Tango::OPERATOR);
 	command_list.push_back(pOnCmd);
+
+	//	Command GetCameraList
+	GetCameraListClass	*pGetCameraListCmd =
+		new GetCameraListClass("GetCameraList",
+			Tango::DEV_VOID, Tango::DEVVAR_STRINGARRAY,
+			"",
+			"",
+			Tango::OPERATOR);
+	command_list.push_back(pGetCameraListCmd);
 
 	/*----- PROTECTED REGION ID(JaiGenicamDSClass::command_factory_after) ENABLED START -----*/
 	

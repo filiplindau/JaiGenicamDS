@@ -140,10 +140,19 @@ bool JaiGenicamDS::is_TriggerSource_allowed(TANGO_UNUSED(Tango::AttReqType type)
 bool JaiGenicamDS::is_FrameCounter_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
 
-	//	Not any excluded states for FrameCounter attribute in read access.
-	/*----- PROTECTED REGION ID(JaiGenicamDS::FrameCounterStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::UNKNOWN)
+		{
+		/*----- PROTECTED REGION ID(JaiGenicamDS::FrameCounterStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::FrameCounterStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -175,10 +184,20 @@ bool JaiGenicamDS::is_TriggerMode_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool JaiGenicamDS::is_ImageHeight_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ImageHeight attribute in Write access.
-	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageHeightStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::RUNNING)
+		{
+		/*----- PROTECTED REGION ID(JaiGenicamDS::ImageHeightStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageHeightStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
 	//	Not any excluded states for ImageHeight attribute in read access.
 	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageHeightStateAllowed_READ) ENABLED START -----*/
@@ -195,10 +214,20 @@ bool JaiGenicamDS::is_ImageHeight_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool JaiGenicamDS::is_ImageWidth_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ImageWidth attribute in Write access.
-	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageWidthStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::RUNNING)
+		{
+		/*----- PROTECTED REGION ID(JaiGenicamDS::ImageWidthStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageWidthStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
 	//	Not any excluded states for ImageWidth attribute in read access.
 	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageWidthStateAllowed_READ) ENABLED START -----*/
@@ -215,10 +244,20 @@ bool JaiGenicamDS::is_ImageWidth_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool JaiGenicamDS::is_ImageOffsetX_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ImageOffsetX attribute in Write access.
-	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageOffsetXStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::RUNNING)
+		{
+		/*----- PROTECTED REGION ID(JaiGenicamDS::ImageOffsetXStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageOffsetXStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
 	//	Not any excluded states for ImageOffsetX attribute in read access.
 	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageOffsetXStateAllowed_READ) ENABLED START -----*/
@@ -235,10 +274,20 @@ bool JaiGenicamDS::is_ImageOffsetX_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool JaiGenicamDS::is_ImageOffsetY_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ImageOffsetY attribute in Write access.
-	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageOffsetYStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::RUNNING)
+		{
+		/*----- PROTECTED REGION ID(JaiGenicamDS::ImageOffsetYStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageOffsetYStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
 	//	Not any excluded states for ImageOffsetY attribute in read access.
 	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageOffsetYStateAllowed_READ) ENABLED START -----*/
@@ -286,10 +335,19 @@ bool JaiGenicamDS::is_PixelFormat_allowed(TANGO_UNUSED(Tango::AttReqType type))
 bool JaiGenicamDS::is_Image_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
 
-	//	Not any excluded states for Image attribute in read access.
-	/*----- PROTECTED REGION ID(JaiGenicamDS::ImageStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::UNKNOWN)
+		{
+		/*----- PROTECTED REGION ID(JaiGenicamDS::ImageStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ImageStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -364,6 +422,21 @@ bool JaiGenicamDS::is_On_allowed(TANGO_UNUSED(const CORBA::Any &any))
 	/*----- PROTECTED REGION ID(JaiGenicamDS::OnStateAllowed) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::OnStateAllowed
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : JaiGenicamDS::is_GetCameraList_allowed()
+ *	Description : Execution allowed for GetCameraList attribute
+ */
+//--------------------------------------------------------
+bool JaiGenicamDS::is_GetCameraList_allowed(TANGO_UNUSED(const CORBA::Any &any))
+{
+	//	Not any excluded states for GetCameraList command.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::GetCameraListStateAllowed) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::GetCameraListStateAllowed
 	return true;
 }
 

@@ -1,0 +1,8 @@
+﻿Build started 11/10/2016 15:39:28.
+     1>Project "C:\Users\laser\Documents\Visual Studio 2012\Projects\JaiGenicamDS\vc10_proj\Class_dll.vcxproj" on node 3 (Build target(s)).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V110\Microsoft.Cpp.Platform.targets(44,5): error MSB8020: The builds tools for Windows7.1SDK (Platform Toolset = 'Windows7.1SDK') cannot be found. To build using the Windows7.1SDK build tools, either click the Project menu or right-click the solution, and then select "Update VC++ Projects...". Install Windows7.1SDK to build using the Windows7.1SDK build tools.
+     1>Done Building Project "C:\Users\laser\Documents\Visual Studio 2012\Projects\JaiGenicamDS\vc10_proj\Class_dll.vcxproj" (Build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:00.01

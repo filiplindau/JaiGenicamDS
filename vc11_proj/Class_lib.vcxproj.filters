@@ -5,12 +5,17 @@
     <ClCompile Include="..\JaiGenicamDSClass.cpp" />
     <ClCompile Include="..\JaiGenicamDSStateMachine.cpp" />
     <ClCompile Include="..\JaiGenicamConnection.cpp" />
+    <ClCompile Include="..\JaiGenicamCameraControl.cpp" />
+    <ClCompile Include="..\JaiGenicamCameraControlCameraAccess.cpp" />
+    <ClCompile Include="..\JaiGenicamCameraControlStateHandlers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\JaiGenicamDS.h">
     </ClInclude>
     <ClInclude Include="..\JaiGenicamConnection.h" />
     <ClInclude Include="..\JaiGenicamDSClass.h" />
+    <ClInclude Include="..\Signal.h" />
+    <ClInclude Include="..\JaiGenicamCameraControl.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

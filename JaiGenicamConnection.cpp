@@ -14,7 +14,8 @@ namespace JaiGenicamConnection_ns
 {
 
 	JaiGenicamConnection::JaiGenicamConnection(::JaiGenicamDS_ns::JaiGenicamDS* tango_ds_class, std::string camera_serial)
-	{
+	{		
+
 		std::cout << "Creating JaiGenicamConnection object" << std::endl;
 
 		this->tango_ds_class = tango_ds_class;
@@ -62,6 +63,11 @@ namespace JaiGenicamConnection_ns
 									 false };	// valid
 		this->pixelformat_node = pfn;
 
+		this->error_data.calling_function = "";
+		this->error_data.calling_state = "";
+		this->error_data.error_message = "";
+		this->error_data.retval = J_ST_SUCCESS;
+
 		std::cout << "State" << std::endl;
 		this->jai_genicam_state = JaiGenicamDisconnectedState::Instance();
 		std::cout << "State instance: " << this->jai_genicam_state << std::endl;
@@ -73,12 +79,14 @@ namespace JaiGenicamConnection_ns
 		std::cout << "JaiGenicamConnection destructor" << std::endl;
 		close_camera();
 		close_factory();
-		delete this->jai_genicam_state;
+//		delete this->jai_genicam_state;
 	}
 
 	void JaiGenicamConnection::change_state(JaiGenicamState* new_state)
 	{
+		std::cout << "Changing state." << std::endl;
 		this->jai_genicam_state = new_state;
+		std::cout << "New state object." << std::endl;
 		this->jai_genicam_state->enter(this);
 	};
 
@@ -204,7 +212,7 @@ namespace JaiGenicamConnection_ns
 
 			if(this->image_buffer.pImageBuffer != NULL)
 			{
-				// Already when the buffer exists, and the size is different:
+				// When the buffer already exists, and the size is different:
 				if((this->image_buffer.iSizeX != aq_imageinfo_p->iSizeX) || (this->image_buffer.iSizeY != aq_imageinfo_p->iSizeY))
 				{
 					// Abandons the buffer.
@@ -308,6 +316,7 @@ namespace JaiGenicamConnection_ns
 				std::cout << "Camera closed." << std::endl;
 				wrapper->camera_handle = NULL;
 			}
+			std::cout << "Changing state to disconnected." << std::endl;
 			change_state(wrapper, JaiGenicamDisconnectedState::Instance());
 		}
 		return 0;
@@ -570,6 +579,7 @@ namespace JaiGenicamConnection_ns
 		std::cout << "Entering INIT state" << std::endl;
 		wrapper->tango_ds_class->set_state(Tango::DevState::UNKNOWN);
 		wrapper->run();
+		this->disable_auto_nodes(wrapper);
 		return 0;
 	}
 
@@ -701,6 +711,77 @@ namespace JaiGenicamConnection_ns
 		return 0;
 	};
 
+	int JaiGenicamInitState::disable_auto_nodes(JaiGenicamConnection* wrapper)
+	{
+		std::cout << "JaiGenicamInitState::disable_auto_nodes" << std::endl;
+		
+		J_STATUS_TYPE		retval;
+		J_NODE_TYPE			node_type;
+		std::stringstream	err_msg;
+		int64_t				int_value;
+		uint32_t			n_nodes;
+		string				node_name;		
+		string				auto_name = "auto";
+		char				char_buffer_p[512];
+		uint32_t			char_buffer_size;
+		NODE_HANDLE			h_node;
+		std::size_t			found_pos;
+		vector<string>		off_names;
+		off_names.push_back("exposure");
+		off_names.push_back("gain");
+
+		retval = J_Camera_GetNumOfNodes(wrapper->camera_handle, &n_nodes);
+		if (retval != J_ST_SUCCESS)
+		{ 
+			err_msg <<  "Failure getting number of nodes, returned " << wrapper->get_error_string(retval) ;
+			std::cout << err_msg.str() << std::endl;
+			return retval;
+		}
+		std::cout << "Found " << n_nodes << " nodes." << std::endl;
+
+		for (int i_node=0; i_node < n_nodes; i_node++)
+		{
+			retval = J_Camera_GetNodeByIndex(wrapper->camera_handle, i_node, &h_node);
+			if (retval != J_ST_SUCCESS)
+			{ 
+				err_msg <<  "Failure getting node index " << i_node << ", returned " << wrapper->get_error_string(retval) ;
+				std::cout << err_msg.str() << std::endl;
+				return retval;
+			}
+			char_buffer_size = 512;
+			retval = J_Node_GetName(h_node, (int8_t*)char_buffer_p, &char_buffer_size);
+			if (retval != J_ST_SUCCESS)
+			{ 
+				err_msg <<  "Failure getting node name for index " << i_node << ", returned " << wrapper->get_error_string(retval) ;
+				std::cout << err_msg.str() << std::endl;
+				return retval;
+			}
+			node_name = char_buffer_p;
+			std::transform(node_name.begin(), node_name.end(), node_name.begin(), ::tolower);
+			found_pos = node_name.find(auto_name);
+			if (found_pos != node_name.npos)
+			{
+				std::cout << "Found name with auto: " << node_name << "." << std::endl;
+				for (auto & off_name : off_names)
+				{
+					found_pos = node_name.find(off_name);
+					if (found_pos != node_name.npos)
+					{						
+						J_Node_GetType(h_node, &node_type);
+						if (node_type == J_IEnumeration)
+						{
+							std::cout << "Turning off." << std::endl;
+							int_value = 0;
+							retval = J_Node_SetValueInt64(h_node, true, int_value);
+						}
+					}
+				}
+			}
+		}
+
+	};
+
+
 
 	/* -----------------------------------------------
 		JaiGenicamConnectedState implementation
@@ -718,15 +799,6 @@ namespace JaiGenicamConnection_ns
 		std::thread t = std::thread(&JaiGenicamConnectedState::stop_capture, this, wrapper);
 		t.detach();
 
-//		retval = this->get_node(wrapper, &wrapper->gain_node);
-//		retval = this->get_node(wrapper, &wrapper->exposuretime_node);
-//		retval = this->get_node(wrapper, &wrapper->imagewidth_node);
-//		retval = this->get_node(wrapper, &wrapper->imageheight_node);
-//		retval = this->get_node(wrapper, &wrapper->pixelformat_node);
-//		retval = this->get_node(wrapper, &wrapper->framerate_node);
-//		double g;
-//		retval = this->get_gain(wrapper, &g);
-//		std::cout << "Gain value: " << g << std::endl;
 		return 0;
 
 	}
@@ -1269,7 +1341,7 @@ namespace JaiGenicamConnection_ns
 			{
 				// It was an integer value
 //				std::cout << "Node type integer" << std::endl;
-				generic_node_p->type = "integer";
+				generic_node_p->type = J_NODE_TYPE::J_IInteger;
 				// Get actual value:
 				retval = J_Node_GetValueInt64(h_node, true, &int_value);
 				if (retval != J_ST_SUCCESS)
@@ -1308,7 +1380,7 @@ namespace JaiGenicamConnection_ns
 			case J_ISwissKnife:
 			{
 				// It was a float value
-				generic_node_p->type = "double";
+				generic_node_p->type = J_NODE_TYPE::J_IFloat;
 //				std::cout << "Node type float" << std::endl;
 
 				// Get actual value:
@@ -1349,7 +1421,7 @@ namespace JaiGenicamConnection_ns
 			case J_IEnumEntry:
 				{
 					// It was an enumeration value
-					generic_node_p->type = "enumeration";
+					generic_node_p->type = J_NODE_TYPE::J_IEnumeration;
 //					std::cout << "Node type enum" << std::endl;
 					// Get actual value:
 					retval = J_Node_GetValueInt64(h_node, true, &int_value);				
@@ -1565,7 +1637,56 @@ namespace JaiGenicamConnection_ns
 		return 0;
 	};
 
-	
+	int JaiGenicamRunningState::close_camera(JaiGenicamConnection* wrapper)
+	{
+		std::cout << "JaiGenicamRunningState close camera" << std::endl;
+		J_STATUS_TYPE   retval;
+		std::stringstream err_msg;
+
+		std::unique_lock<std::mutex> lock(wrapper->camera_mtx);	
+			// Stop Acquisition
+			if (wrapper->camera_handle != NULL) 
+			{
+				retval = J_Camera_ExecuteCommand(wrapper->camera_handle, NODE_NAME_ACQSTOP);
+				if (retval != J_ST_SUCCESS)
+				{
+					err_msg << "Could not Stop Acquisition! " << wrapper->get_error_string(retval) << std::endl;
+					std::cout << err_msg.str();
+					return retval;
+				}
+			}
+
+			if(wrapper->capture_thread_handle != NULL)
+			{
+				// Close stream
+				retval = J_Image_CloseStream(wrapper->capture_thread_handle);
+				if (retval != J_ST_SUCCESS)
+				{
+					err_msg << "Could not close Stream!! " << wrapper->get_error_string(retval) << std::endl;
+					std::cout << err_msg.str();
+					return retval;
+				}
+				wrapper->capture_thread_handle = NULL;
+			}
+		lock.unlock();
+
+		if (wrapper->camera_handle != NULL)
+		{
+			retval = J_Camera_Close(wrapper->camera_handle);
+			if (retval != J_ST_SUCCESS)
+			{
+				std::cout <<  "Could not close camera! " << wrapper->get_error_string(retval) << std::endl;
+			}
+			else
+			{
+				std::cout << "Camera closed." << std::endl;
+				wrapper->camera_handle = NULL;
+			}
+			std::cout << "Changing state to disconnected." << std::endl;
+			change_state(wrapper, JaiGenicamDisconnectedState::Instance());
+		}
+		return 0;
+	};
 
 
 	template<typename T>
@@ -1966,7 +2087,7 @@ namespace JaiGenicamConnection_ns
 			{
 				// It was an integer value
 //				std::cout << "Node type integer" << std::endl;
-				generic_node_p->type = "integer";
+				generic_node_p->type = J_NODE_TYPE::J_IInteger;
 				// Get actual value:
 				retval = J_Node_GetValueInt64(h_node, true, &int_value);
 				if (retval != J_ST_SUCCESS)
@@ -2005,7 +2126,7 @@ namespace JaiGenicamConnection_ns
 			case J_ISwissKnife:
 			{
 				// It was a float value
-				generic_node_p->type = "double";
+				generic_node_p->type = J_NODE_TYPE::J_IFloat;
 //				std::cout << "Node type float" << std::endl;
 
 				// Get actual value:
@@ -2046,7 +2167,7 @@ namespace JaiGenicamConnection_ns
 			case J_IEnumEntry:
 				{
 					// It was an enumeration value
-					generic_node_p->type = "enumeration";
+					generic_node_p->type = J_NODE_TYPE::J_IEnumeration;
 //					std::cout << "Node type enum" << std::endl;
 					// Get actual value:
 					retval = J_Node_GetValueInt64(h_node, true, &int_value);				
@@ -2151,6 +2272,20 @@ namespace JaiGenicamConnection_ns
 	int JaiGenicamFaultState::enter( JaiGenicamConnection* wrapper )
 	{
 		std::cout << "Entering FAULT state" << std::endl;
+
+		int result;
+
+		// Stop capture if running
+		result = this->stop_capture(wrapper);
+		// Next, try closing the camera:
+		result = this->close_camera(wrapper);
+		if (result != 0)
+		{
+			// Could not close camera, so go to disconnected state
+			change_state(wrapper, JaiGenicamDisconnectedState::Instance());
+		}
+		// Reconnect to camera:
+		change_state(wrapper, JaiGenicamInitState::Instance());
 		return 0;
 	};
 
@@ -2158,6 +2293,64 @@ namespace JaiGenicamConnection_ns
 	{
 		wrapper->tango_state = wrapper->tango_ds_class->get_state();
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		return 0;
+	};
+
+	int JaiGenicamFaultState::stop_capture(JaiGenicamConnection* wrapper)
+	{
+		std::cout << "Stopping aquisition" << std::endl;
+
+		J_STATUS_TYPE retval;
+		std::stringstream err_msg;
+
+		// Lock the mutex to keep start_capture to execute while we are still stopping
+		std::unique_lock<std::mutex> lock(wrapper->camera_mtx);	
+			// Stop Acquisition
+			if (wrapper->camera_handle != NULL) 
+			{
+				retval = J_Camera_ExecuteCommand(wrapper->camera_handle, NODE_NAME_ACQSTOP);
+				if (retval != J_ST_SUCCESS)
+				{
+					err_msg << "Could not Stop Acquisition! " << wrapper->get_error_string(retval) << std::endl;
+					std::cout << err_msg.str();
+					return retval;
+				}
+			}
+
+			if(wrapper->capture_thread_handle != NULL)
+			{
+				// Close stream
+				retval = J_Image_CloseStream(wrapper->capture_thread_handle);
+				if (retval != J_ST_SUCCESS)
+				{
+					err_msg << "Could not close Stream!! " << wrapper->get_error_string(retval) << std::endl;
+					std::cout << err_msg.str();
+					return retval;
+				}
+				wrapper->capture_thread_handle = NULL;
+			}
+		lock.unlock();
+		return 0;
+	};
+
+	int JaiGenicamFaultState::close_camera(JaiGenicamConnection* wrapper)
+	{
+		std::cout << "JaiGenicamFaultState close camera" << std::endl;
+		J_STATUS_TYPE   retval;
+		if (wrapper->camera_handle != NULL)
+		{
+			retval = J_Camera_Close(wrapper->camera_handle);
+			if (retval != J_ST_SUCCESS)
+			{
+				std::cout <<  "Could not close camera! " << wrapper->get_error_string(retval) << std::endl;
+				return retval;
+			}
+			else
+			{
+				std::cout << "Camera closed." << std::endl;
+				wrapper->camera_handle = NULL;
+			}			
+		}
 		return 0;
 	};
 

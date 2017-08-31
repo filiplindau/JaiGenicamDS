@@ -1,13 +1,13 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
 <html>
 <head>
-<title> JaiGenicamDS Tango Class Attribute FrameCounter </title>
+<title> JaiGenicamDS Tango Class Attribute TriggerSource </title>
 </head>
 <body text="Black" bgcolor="White" link="Blue" vlink="Purple" alink="Red">
 <br><br><br>
-<font size="+1"><u><b> Attribute FrameCounter : </b></u></font>
+<font size="+1"><u><b> Attribute TriggerSource : </b></u></font>
 <ul>
-	Counts number of frames captured since starting acquisition. 
+	Select if external (true) or internal (false) triggering is to be used.
 </ul>
 <br><br><br>
 <Table Border=0 Cellpadding=0 CELLSPACING=20>
@@ -23,11 +23,11 @@
 				</tr>
 				<tr>
 					<td> R/W Type </td>
-					<td> READ </td>
+					<td> READ_WRITE </td>
 				</tr>
 				<tr>
 					<td> Data Type </td>
-					<td> Tango::DEV_LONG64 </td>
+					<td> Tango::DEV_STRING </td>
 				</tr>
 				<tr>
 					<td> Display Level </td>
@@ -47,12 +47,20 @@
 				</tr>
 				<tr>
 					<td> Memorized </td>
-					<td> Not set </td>
+					<td> true </td>
+				</tr>
+				<tr>
+					<td> Write hardware at init. </td>
+					<td> true </td>
 				</tr>
 			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
 				<tr>
-					<td> Read NOT allowed for </td>
-					<td> <font size="-1">  <li> UNKNOWN </li> </font> </td>
+					<td> Read allowed for </td>
+					<td> All states </td>
+				</tr>
+				<tr>
+					<td> Write allowed for </td>
+					<td> All states </td>
 				</tr>
 			</table>
 		</td>
@@ -63,7 +71,7 @@
 				</tr>
 				<tr>
 					<td> label </td>
-					<td> frame counter </td>
+					<td> external trigger </td>
 				</tr>
 				<tr>
 					<td> unit </td>

@@ -43,18 +43,18 @@
 		<td> false </td>
 		<td> false </td>
 		<td> Scalar </td>
-		<td> READ_WRITE </td>
+		<td> READ </td>
 		<td> Tango::DEV_DOUBLE </td>
 		<td> OPERATOR </td>
 		<td> Frame rate of the camera when free running </td>
 	</tr>
 	<tr>
-		<td> <a href="AttrExternalTrigger.html"> ExternalTrigger </a> </td>
+		<td> <a href="AttrTriggerSource.html"> TriggerSource </a> </td>
 		<td> false </td>
 		<td> false </td>
 		<td> Scalar </td>
 		<td> READ_WRITE </td>
-		<td> Tango::DEV_BOOLEAN </td>
+		<td> Tango::DEV_STRING </td>
 		<td> OPERATOR </td>
 		<td> Select if external (true) or internal (false) triggering is to be used. </td>
 	</tr>
@@ -67,6 +67,66 @@
 		<td> Tango::DEV_LONG64 </td>
 		<td> OPERATOR </td>
 		<td> Counts number of frames captured since starting acquisition.  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrTriggerMode.html"> TriggerMode </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_STRING </td>
+		<td> OPERATOR </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrImageHeight.html"> ImageHeight </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_ULONG </td>
+		<td> OPERATOR </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrImageWidth.html"> ImageWidth </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_ULONG </td>
+		<td> OPERATOR </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrImageOffsetX.html"> ImageOffsetX </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_ULONG </td>
+		<td> OPERATOR </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrImageOffsetY.html"> ImageOffsetY </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_ULONG </td>
+		<td> OPERATOR </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrPixelFormat.html"> PixelFormat </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_STRING </td>
+		<td> OPERATOR </td>
+		<td>  </td>
 	</tr>
 	<tr>
 		<td> <a href="AttrImage.html"> Image </a> </td>

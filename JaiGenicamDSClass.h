@@ -329,6 +329,29 @@ public:
 	{return (static_cast<JaiGenicamDS *>(dev))->is_On_allowed(any);}
 };
 
+//	Command GetCameraList class definition
+class GetCameraListClass : public Tango::Command
+{
+public:
+	GetCameraListClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
+
+	GetCameraListClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~GetCameraListClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<JaiGenicamDS *>(dev))->is_GetCameraList_allowed(any);}
+};
+
 
 /**
  *	The JaiGenicamDSClass singleton definition

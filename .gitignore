@@ -27,3 +27,11 @@
 *.exe
 *.out
 *.app
+
+# Log files
+*.tlog
+
+# Visual studio stuff
+*.sdf
+*.suo
+*.pdb

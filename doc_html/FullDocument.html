@@ -18,15 +18,22 @@
 				<li> <a href="FullDocument.html#cmdStatus"> Status </a>
 				<li> <a href="FullDocument.html#cmdstart"> start </a>
 				<li> <a href="FullDocument.html#cmdstop"> stop </a>
-				<li> <a href="FullDocument.html#cmddisconnect"> disconnect </a>
+				<li> <a href="FullDocument.html#cmdOff"> Off </a>
+				<li> <a href="FullDocument.html#cmdOn"> On </a>
 			</ul>
 			<li> <a href="FullDocument.html#attributes">   Attributes   </a>
 			<ul>
 				<li> <a href="FullDocument.html#attrExposureTime"> ExposureTime </a>
 				<li> <a href="FullDocument.html#attrGain"> Gain </a>
 				<li> <a href="FullDocument.html#attrFrameRate"> FrameRate </a>
-				<li> <a href="FullDocument.html#attrExternalTrigger"> ExternalTrigger </a>
+				<li> <a href="FullDocument.html#attrTriggerSource"> TriggerSource </a>
 				<li> <a href="FullDocument.html#attrFrameCounter"> FrameCounter </a>
+				<li> <a href="FullDocument.html#attrTriggerMode"> TriggerMode </a>
+				<li> <a href="FullDocument.html#attrImageHeight"> ImageHeight </a>
+				<li> <a href="FullDocument.html#attrImageWidth"> ImageWidth </a>
+				<li> <a href="FullDocument.html#attrImageOffsetX"> ImageOffsetX </a>
+				<li> <a href="FullDocument.html#attrImageOffsetY"> ImageOffsetY </a>
+				<li> <a href="FullDocument.html#attrPixelFormat"> PixelFormat </a>
 				<li> <a href="FullDocument.html#attrImage"> Image </a>
 			</ul>
 			<li> <a href="FullDocument.html#states">       States       </a>
@@ -105,10 +112,74 @@
 		<td> <center><b> Default Value </b></center> </td>
 	</tr>
 	<tr>
-		<td> serial_number </td>
-		<td> Serial number of the camera, used to identify it on the network </td>
+		<td> id_number </td>
+		<td> Id of the camera, used to identify it on the network. <Br>
+			Type ip address or serial number of the camera. </td>
 		<td> String </td>
 		<td> none </td>
+	</tr>
+	<tr>
+		<td> gain_node_name </td>
+		<td> Name of gain node in the camera genicam node tree.<Br>
+			Normally ``Gain`` or ``GainRaw``. </td>
+		<td> String </td>
+		<td> none </td>
+	</tr>
+	<tr>
+		<td> exposuretime_node_name </td>
+		<td> Name of exposuretime node in camera genicam node tree. <Br>
+			Normally ``ExposureTime`` or ``ExposureTimeAbs`` </td>
+		<td> String </td>
+		<td> none </td>
+	</tr>
+	<tr>
+		<td> triggersource_node_name </td>
+		<td> Name of trigger source node in camera genicam node tree. <Br>
+			Normally ``TriggerSource` </td>
+		<td> String </td>
+		<td> none </td>
+	</tr>
+	<tr>
+		<td> triggermode_node_name </td>
+		<td> Name of trigger mode node in camera genicam node tree. <Br>
+			Normally ``TriggerMode`` </td>
+		<td> String </td>
+		<td> TriggerMode <br> </td>
+	</tr>
+	<tr>
+		<td> width_node_name </td>
+		<td> Name of image width node in camera genicam node tree. <Br>
+			Normally ``Width`` </td>
+		<td> String </td>
+		<td> Width <br> </td>
+	</tr>
+	<tr>
+		<td> height_node_name </td>
+		<td> Name of image height node in camera genicam node tree. <Br>
+			Normally ``Height`` </td>
+		<td> String </td>
+		<td> Height <br> </td>
+	</tr>
+	<tr>
+		<td> offsetx_node_name </td>
+		<td> Name of image offset x node in camera genicam node tree. <Br>
+			Normally ``OffsetX`` </td>
+		<td> String </td>
+		<td> OffsetX <br> </td>
+	</tr>
+	<tr>
+		<td> offsety_node_name </td>
+		<td> Name of image offset y node in camera genicam node tree. <Br>
+			Normally ``OffsetY`` </td>
+		<td> String </td>
+		<td> OffsetY <br> </td>
+	</tr>
+	<tr>
+		<td> pixelformat_node_name </td>
+		<td> Name of pixelformat node in camera genicam node tree. <Br>
+			Normally ``PixelFormat`` </td>
+		<td> String </td>
+		<td> PixelFormat <br> </td>
 	</tr>
 </table>
 <br><br>
@@ -154,11 +225,18 @@
 		<td> Stop camera acquisition </td>
 	</tr>
 	<tr>
-		<td> <a href="Cmddisconnect.html"> disconnect </a> </td>
+		<td> <a href="CmdOff.html"> Off </a> </td>
 		<td> DEV_VOID </td>
 		<td> DEV_VOID </td>
 		<td> OPERATOR </td>
 		<td> Disconnect from camera (e.g. to allow other software to use it) </td>
+	</tr>
+	<tr>
+		<td> <a href="CmdOn.html"> On </a> </td>
+		<td> DEV_VOID </td>
+		<td> DEV_VOID </td>
+		<td> OPERATOR </td>
+		<td> Connect to camera </td>
 	</tr>
 </table>
 <br><br><hr>
@@ -303,8 +381,8 @@
 	</tr>
 <Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td><Td><Hr></Td></Tr>
 	<tr>
-		<td> Command allowed for </td>
-		<td> All states </td>
+		<td> Command NOT allowed for </td>
+		<td> <font size="-1">  <li> UNKNOWN </li>  <li> OFF </li> </font> </td>
 		<td> .. </td>
 	</tr>
 </table>
@@ -352,22 +430,71 @@
 	</tr>
 <Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td><Td><Hr></Td></Tr>
 	<tr>
-		<td> Command allowed for </td>
-		<td> All states </td>
+		<td> Command NOT allowed for </td>
+		<td> <font size="-1">  <li> UNKNOWN </li>  <li> OFF </li> </font> </td>
 		<td> .. </td>
 	</tr>
 </table>
 <br><br><hr>
-<a name="cmddisconnect"> </a>
+<a name="cmdOff"> </a>
 <br><br><br>
-<font size="+1"><u><b> Command disconnect : </b></u></font>
+<font size="+1"><u><b> Command Off : </b></u></font>
 <ul>
 	Disconnect from camera (e.g. to allow other software to use it)
 </ul>
 <br><br><br>
 <Table Border=2 Cellpadding=3 CELLSPACING=0>
 	<tr bgcolor="#CCCCFF" class="TableHeadingColor">
-	<td colspan=0> <font size=+1> <center><b> disconnect Definition </b></font></center></td>
+	<td colspan=0> <font size=+1> <center><b> Off Definition </b></font></center></td>
+	</tr>
+	<tr>
+		<td> Input Argument </td>
+		<td> Tango::DEV_VOID </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> Output Argument </td>
+		<td> Tango::DEV_VOID </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> DisplayLevel </td>
+		<td> OPERATOR </td>
+		<td> .. </td>
+	</tr>
+	<tr>
+		<td> Inherited </td>
+		<td> false </td>
+		<td> .. </td>
+	</tr>
+	<tr>
+		<td> Abstract </td>
+		<td> false </td>
+		<td> .. </td>
+	</tr>
+	<tr>
+		<td> Polling Period </td>
+		<td> Not polled </td>
+		<td> .. </td>
+	</tr>
+<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td><Td><Hr></Td></Tr>
+	<tr>
+		<td> Command allowed for </td>
+		<td> All states </td>
+		<td> .. </td>
+	</tr>
+</table>
+<br><br><hr>
+<a name="cmdOn"> </a>
+<br><br><br>
+<font size="+1"><u><b> Command On : </b></u></font>
+<ul>
+	Connect to camera
+</ul>
+<br><br><br>
+<Table Border=2 Cellpadding=3 CELLSPACING=0>
+	<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+	<td colspan=0> <font size=+1> <center><b> On Definition </b></font></center></td>
 	</tr>
 	<tr>
 		<td> Input Argument </td>
@@ -448,18 +575,18 @@
 		<td> false </td>
 		<td> false </td>
 		<td> Scalar </td>
-		<td> READ_WRITE </td>
+		<td> READ </td>
 		<td> Tango::DEV_DOUBLE </td>
 		<td> OPERATOR </td>
 		<td> Frame rate of the camera when free running </td>
 	</tr>
 	<tr>
-		<td> <a href="AttrExternalTrigger.html"> ExternalTrigger </a> </td>
+		<td> <a href="AttrTriggerSource.html"> TriggerSource </a> </td>
 		<td> false </td>
 		<td> false </td>
 		<td> Scalar </td>
 		<td> READ_WRITE </td>
-		<td> Tango::DEV_BOOLEAN </td>
+		<td> Tango::DEV_STRING </td>
 		<td> OPERATOR </td>
 		<td> Select if external (true) or internal (false) triggering is to be used. </td>
 	</tr>
@@ -472,6 +599,66 @@
 		<td> Tango::DEV_LONG64 </td>
 		<td> OPERATOR </td>
 		<td> Counts number of frames captured since starting acquisition.  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrTriggerMode.html"> TriggerMode </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_STRING </td>
+		<td> OPERATOR </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrImageHeight.html"> ImageHeight </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_ULONG </td>
+		<td> OPERATOR </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrImageWidth.html"> ImageWidth </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_ULONG </td>
+		<td> OPERATOR </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrImageOffsetX.html"> ImageOffsetX </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_ULONG </td>
+		<td> OPERATOR </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrImageOffsetY.html"> ImageOffsetY </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_ULONG </td>
+		<td> OPERATOR </td>
+		<td>  </td>
+	</tr>
+	<tr>
+		<td> <a href="AttrPixelFormat.html"> PixelFormat </a> </td>
+		<td> false </td>
+		<td> false </td>
+		<td> Scalar </td>
+		<td> READ_WRITE </td>
+		<td> Tango::DEV_STRING </td>
+		<td> OPERATOR </td>
+		<td>  </td>
 	</tr>
 	<tr>
 		<td> <a href="AttrImage.html"> Image </a> </td>
@@ -852,7 +1039,7 @@
 				</tr>
 				<tr>
 					<td> R/W Type </td>
-					<td> READ_WRITE </td>
+					<td> READ </td>
 				</tr>
 				<tr>
 					<td> Data Type </td>
@@ -876,19 +1063,11 @@
 				</tr>
 				<tr>
 					<td> Memorized </td>
-					<td> true </td>
-				</tr>
-				<tr>
-					<td> Write hardware at init. </td>
-					<td> true </td>
+					<td> Not set </td>
 				</tr>
 			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
 				<tr>
 					<td> Read allowed for </td>
-					<td> All states </td>
-				</tr>
-				<tr>
-					<td> Write allowed for </td>
 					<td> All states </td>
 				</tr>
 			</table>
@@ -1003,9 +1182,9 @@
 </table>
 <br><br>
 <hr>
-<a name="attrExternalTrigger"> </a>
+<a name="attrTriggerSource"> </a>
 <br><br><br>
-<font size="+1"><u><b> Attribute ExternalTrigger : </b></u></font>
+<font size="+1"><u><b> Attribute TriggerSource : </b></u></font>
 <ul>
 	Select if external (true) or internal (false) triggering is to be used.
 </ul>
@@ -1027,7 +1206,7 @@
 				</tr>
 				<tr>
 					<td> Data Type </td>
-					<td> Tango::DEV_BOOLEAN </td>
+					<td> Tango::DEV_STRING </td>
 				</tr>
 				<tr>
 					<td> Display Level </td>
@@ -1222,8 +1401,8 @@
 				</tr>
 			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
 				<tr>
-					<td> Read allowed for </td>
-					<td> All states </td>
+					<td> Read NOT allowed for </td>
+					<td> <font size="-1">  <li> UNKNOWN </li> </font> </td>
 				</tr>
 			</table>
 		</td>
@@ -1235,6 +1414,1026 @@
 				<tr>
 					<td> label </td>
 					<td> frame counter </td>
+				</tr>
+				<tr>
+					<td> unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> standard unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> display unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> format </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_time </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_val </td>
+					<td>  </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Right" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Event Criteria </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Archive Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Push Change event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push Archive event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push DataReady event by user code </td>
+					<td> false </td>
+				</tr>
+			</table>
+		</td>
+	</TR>
+</table>
+<br><br>
+<hr>
+<a name="attrTriggerMode"> </a>
+<br><br><br>
+<font size="+1"><u><b> Attribute TriggerMode : </b></u></font>
+<ul>
+</ul>
+<br><br><br>
+<Table Border=0 Cellpadding=0 CELLSPACING=20>
+	<TR>
+		<TD ALIGN="left" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Definition </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Attribute Type </td>
+					<td> Scalar </td>
+				</tr>
+				<tr>
+					<td> R/W Type </td>
+					<td> READ_WRITE </td>
+				</tr>
+				<tr>
+					<td> Data Type </td>
+					<td> Tango::DEV_STRING </td>
+				</tr>
+				<tr>
+					<td> Display Level </td>
+					<td> OPERATOR </td>
+				</tr>
+				<tr>
+					<td> Inherited </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Abstract </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Polling Period </td>
+					<td> Not polled </td>
+				</tr>
+				<tr>
+					<td> Memorized </td>
+					<td> true </td>
+				</tr>
+				<tr>
+					<td> Write hardware at init. </td>
+					<td> true </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Read allowed for </td>
+					<td> All states </td>
+				</tr>
+				<tr>
+					<td> Write allowed for </td>
+					<td> All states </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Center" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Properties </b></font></center></td>
+				</tr>
+				<tr>
+					<td> label </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> standard unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> display unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> format </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_time </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_val </td>
+					<td>  </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Right" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Event Criteria </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Archive Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Push Change event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push Archive event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push DataReady event by user code </td>
+					<td> false </td>
+				</tr>
+			</table>
+		</td>
+	</TR>
+</table>
+<br><br>
+<hr>
+<a name="attrImageHeight"> </a>
+<br><br><br>
+<font size="+1"><u><b> Attribute ImageHeight : </b></u></font>
+<ul>
+</ul>
+<br><br><br>
+<Table Border=0 Cellpadding=0 CELLSPACING=20>
+	<TR>
+		<TD ALIGN="left" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Definition </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Attribute Type </td>
+					<td> Scalar </td>
+				</tr>
+				<tr>
+					<td> R/W Type </td>
+					<td> READ_WRITE </td>
+				</tr>
+				<tr>
+					<td> Data Type </td>
+					<td> Tango::DEV_ULONG </td>
+				</tr>
+				<tr>
+					<td> Display Level </td>
+					<td> OPERATOR </td>
+				</tr>
+				<tr>
+					<td> Inherited </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Abstract </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Polling Period </td>
+					<td> Not polled </td>
+				</tr>
+				<tr>
+					<td> Memorized </td>
+					<td> true </td>
+				</tr>
+				<tr>
+					<td> Write hardware at init. </td>
+					<td> true </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Read allowed for </td>
+					<td> All states </td>
+				</tr>
+				<tr>
+					<td> Write NOT allowed for </td>
+					<td> <font size="-1">  <li> RUNNING </li> </font> </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Center" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Properties </b></font></center></td>
+				</tr>
+				<tr>
+					<td> label </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> standard unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> display unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> format </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_time </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_val </td>
+					<td>  </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Right" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Event Criteria </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Archive Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Push Change event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push Archive event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push DataReady event by user code </td>
+					<td> false </td>
+				</tr>
+			</table>
+		</td>
+	</TR>
+</table>
+<br><br>
+<hr>
+<a name="attrImageWidth"> </a>
+<br><br><br>
+<font size="+1"><u><b> Attribute ImageWidth : </b></u></font>
+<ul>
+</ul>
+<br><br><br>
+<Table Border=0 Cellpadding=0 CELLSPACING=20>
+	<TR>
+		<TD ALIGN="left" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Definition </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Attribute Type </td>
+					<td> Scalar </td>
+				</tr>
+				<tr>
+					<td> R/W Type </td>
+					<td> READ_WRITE </td>
+				</tr>
+				<tr>
+					<td> Data Type </td>
+					<td> Tango::DEV_ULONG </td>
+				</tr>
+				<tr>
+					<td> Display Level </td>
+					<td> OPERATOR </td>
+				</tr>
+				<tr>
+					<td> Inherited </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Abstract </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Polling Period </td>
+					<td> Not polled </td>
+				</tr>
+				<tr>
+					<td> Memorized </td>
+					<td> true </td>
+				</tr>
+				<tr>
+					<td> Write hardware at init. </td>
+					<td> true </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Read allowed for </td>
+					<td> All states </td>
+				</tr>
+				<tr>
+					<td> Write NOT allowed for </td>
+					<td> <font size="-1">  <li> RUNNING </li> </font> </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Center" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Properties </b></font></center></td>
+				</tr>
+				<tr>
+					<td> label </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> standard unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> display unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> format </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_time </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_val </td>
+					<td>  </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Right" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Event Criteria </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Archive Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Push Change event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push Archive event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push DataReady event by user code </td>
+					<td> false </td>
+				</tr>
+			</table>
+		</td>
+	</TR>
+</table>
+<br><br>
+<hr>
+<a name="attrImageOffsetX"> </a>
+<br><br><br>
+<font size="+1"><u><b> Attribute ImageOffsetX : </b></u></font>
+<ul>
+</ul>
+<br><br><br>
+<Table Border=0 Cellpadding=0 CELLSPACING=20>
+	<TR>
+		<TD ALIGN="left" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Definition </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Attribute Type </td>
+					<td> Scalar </td>
+				</tr>
+				<tr>
+					<td> R/W Type </td>
+					<td> READ_WRITE </td>
+				</tr>
+				<tr>
+					<td> Data Type </td>
+					<td> Tango::DEV_ULONG </td>
+				</tr>
+				<tr>
+					<td> Display Level </td>
+					<td> OPERATOR </td>
+				</tr>
+				<tr>
+					<td> Inherited </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Abstract </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Polling Period </td>
+					<td> Not polled </td>
+				</tr>
+				<tr>
+					<td> Memorized </td>
+					<td> true </td>
+				</tr>
+				<tr>
+					<td> Write hardware at init. </td>
+					<td> true </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Read allowed for </td>
+					<td> All states </td>
+				</tr>
+				<tr>
+					<td> Write NOT allowed for </td>
+					<td> <font size="-1">  <li> RUNNING </li> </font> </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Center" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Properties </b></font></center></td>
+				</tr>
+				<tr>
+					<td> label </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> standard unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> display unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> format </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_time </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_val </td>
+					<td>  </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Right" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Event Criteria </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Archive Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Push Change event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push Archive event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push DataReady event by user code </td>
+					<td> false </td>
+				</tr>
+			</table>
+		</td>
+	</TR>
+</table>
+<br><br>
+<hr>
+<a name="attrImageOffsetY"> </a>
+<br><br><br>
+<font size="+1"><u><b> Attribute ImageOffsetY : </b></u></font>
+<ul>
+</ul>
+<br><br><br>
+<Table Border=0 Cellpadding=0 CELLSPACING=20>
+	<TR>
+		<TD ALIGN="left" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Definition </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Attribute Type </td>
+					<td> Scalar </td>
+				</tr>
+				<tr>
+					<td> R/W Type </td>
+					<td> READ_WRITE </td>
+				</tr>
+				<tr>
+					<td> Data Type </td>
+					<td> Tango::DEV_ULONG </td>
+				</tr>
+				<tr>
+					<td> Display Level </td>
+					<td> OPERATOR </td>
+				</tr>
+				<tr>
+					<td> Inherited </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Abstract </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Polling Period </td>
+					<td> Not polled </td>
+				</tr>
+				<tr>
+					<td> Memorized </td>
+					<td> true </td>
+				</tr>
+				<tr>
+					<td> Write hardware at init. </td>
+					<td> true </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Read allowed for </td>
+					<td> All states </td>
+				</tr>
+				<tr>
+					<td> Write NOT allowed for </td>
+					<td> <font size="-1">  <li> RUNNING </li> </font> </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Center" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Properties </b></font></center></td>
+				</tr>
+				<tr>
+					<td> label </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> standard unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> display unit </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> format </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_value </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_alarm </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> max_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> min_warning </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_time </td>
+					<td>  </td>
+				</tr>
+				<tr>
+					<td> delta_val </td>
+					<td>  </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Right" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Event Criteria </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Archive Periodic </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Relative Change </td>
+					<td> Not set </td>
+				</tr>
+				<tr>
+					<td> Archive Absolute Change </td>
+					<td> Not set </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Push Change event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push Archive event by user code </td>
+					<td> false </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td> </Td><Td> </Td></Tr>
+				<tr>
+					<td> Push DataReady event by user code </td>
+					<td> false </td>
+				</tr>
+			</table>
+		</td>
+	</TR>
+</table>
+<br><br>
+<hr>
+<a name="attrPixelFormat"> </a>
+<br><br><br>
+<font size="+1"><u><b> Attribute PixelFormat : </b></u></font>
+<ul>
+</ul>
+<br><br><br>
+<Table Border=0 Cellpadding=0 CELLSPACING=20>
+	<TR>
+		<TD ALIGN="left" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Definition </b></font></center></td>
+				</tr>
+				<tr>
+					<td> Attribute Type </td>
+					<td> Scalar </td>
+				</tr>
+				<tr>
+					<td> R/W Type </td>
+					<td> READ_WRITE </td>
+				</tr>
+				<tr>
+					<td> Data Type </td>
+					<td> Tango::DEV_STRING </td>
+				</tr>
+				<tr>
+					<td> Display Level </td>
+					<td> OPERATOR </td>
+				</tr>
+				<tr>
+					<td> Inherited </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Abstract </td>
+					<td> false </td>
+				</tr>
+				<tr>
+					<td> Polling Period </td>
+					<td> Not polled </td>
+				</tr>
+				<tr>
+					<td> Memorized </td>
+					<td> true </td>
+				</tr>
+				<tr>
+					<td> Write hardware at init. </td>
+					<td> true </td>
+				</tr>
+			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
+				<tr>
+					<td> Read allowed for </td>
+					<td> All states </td>
+				</tr>
+				<tr>
+					<td> Write NOT allowed for </td>
+					<td> <font size="-1">  <li> RUNNING </li> </font> </td>
+				</tr>
+			</table>
+		</td>
+		<TD ALIGN="Center" VALIGN=top>
+			<Table Border=2 Cellpadding=3 CELLSPACING=0>
+				<tr bgcolor="#CCCCFF" class="TableHeadingColor">
+				<td colspan=0> <font size=+1> <center><b> Attribute Properties </b></font></center></td>
+				</tr>
+				<tr>
+					<td> label </td>
+					<td>  </td>
 				</tr>
 				<tr>
 					<td> unit </td>
@@ -1385,8 +2584,8 @@
 				</tr>
 			<Tr BGCOLOR="#CCCCFF"><Td><Hr></Td><Td><Hr></Td></Tr>
 				<tr>
-					<td> Read allowed for </td>
-					<td> All states </td>
+					<td> Read NOT allowed for </td>
+					<td> <font size="-1">  <li> UNKNOWN </li> </font> </td>
 				</tr>
 			</table>
 		</td>
@@ -1526,6 +2725,10 @@
 	<tr>
 		<td> RUNNING </td>
 		<td> Connected to camera, acquiring images </td>
+	</tr>
+	<tr>
+		<td> OFF </td>
+		<td> Disconnected from camera </td>
 	</tr>
 </table>
 </body>

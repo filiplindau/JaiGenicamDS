@@ -41,12 +41,13 @@
 #include <tango.h>
 #include <string>
 #include <map>
-#include "JaiGenicamConnection.h"
+//#include "JaiGenicamConnection.h"
+#include "JaiGenicamCameraControl.h"
 
-namespace JaiGenicamConnection_ns
-	{
-		class JaiGenicamConnection;	
-	};
+//namespace JaiGenicamConnection_ns
+//	{
+//		class JaiGenicamConnection;	
+//	};
 
 /*----- PROTECTED REGION END -----*/	//	JaiGenicamDS.h
 
@@ -71,14 +72,24 @@ class JaiGenicamDS : public TANGO_BASE_CLASS
 
 //	Add your own data members
 private:
-	map<std::string, ::JaiGenicamConnection_ns::GenicamGenericNode> node_map;
+	map<std::string, ::JaiGenicamCameraControl_ns::GenicamGenericNode> node_map;
+	std::mutex attr_mutex;
+	uint16_t** image_buffers_p;
+	std::vector<Tango::DevULong> image_width_v;
+	std::vector<Tango::DevULong> image_height_v;
+	uint16_t n_buffers;
+	std::mutex buffer_mutex;
+	int write_lock_buffer_ind;
+	int read_lock_buffer_ind;
+	int last_lock_buffer_ind;
 
 /*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::Data Members
 
 //	Device property data members
 public:
-	//	serial_number:	Serial number of the camera, used to identify it on the network
-	string	serial_number;
+	//	id_number:	Id of the camera, used to identify it on the network. 
+	//  Type ip address or serial number of the camera.
+	string	id_number;
 	//	gain_node_name:	Name of gain node in the camera genicam node tree.
 	//  Normally ``Gain`` or ``GainRaw``.
 	string	gain_node_name;
@@ -354,14 +365,27 @@ public:
 	 */
 	virtual void on();
 	virtual bool is_On_allowed(const CORBA::Any &any);
+	/**
+	 *	Command GetCameraList related method
+	 *	Description: 
+	 *
+	 *	@returns 
+	 */
+	virtual Tango::DevVarStringArray *get_camera_list();
+	virtual bool is_GetCameraList_allowed(const CORBA::Any &any);
 
 
 /*----- PROTECTED REGION ID(JaiGenicamDS::Additional Method prototypes) ENABLED START -----*/
 
 //	Additional Method prototypes
 private:
-	::JaiGenicamConnection_ns::JaiGenicamConnection* camera_connection;
+	bool attribute_info_init_flag;
+	::JaiGenicamCameraControl_ns::JaiGenicamCameraControl* camera_connection;
 	void update_attribute_info(std::string genicam_name, std::string tango_attribute_name);
+	void update_state(::JaiGenicamCameraControl_ns::CameraState camera_state);
+	void update_status(std::string camera_status);
+	void update_error(::JaiGenicamCameraControl_ns::GenicamErrorStruct error_data);
+	void update_image(int framecounter);
 
 /*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::Additional Method prototypes
 };

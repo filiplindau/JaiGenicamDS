@@ -83,6 +83,10 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">JaiGenicamDS</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">JaiGenicamDS</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>C:\tango\win64\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\tango\win64\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
