@@ -581,13 +581,21 @@ int JaiGenicamCameraControl::populate_node_map()
 			// Then save that name. We will use it late to check if the camera is alive.
 			if (node_type == J_NODE_TYPE::J_IInteger || node_type == J_NODE_TYPE::J_IFloat)
 			{
-				std::string node_name = subfeature_name_string;
-				std::transform(node_name.begin(), node_name.end(), node_name.begin(), ::tolower);
-				int found_pos = node_name.find("exposure");
-				if (found_pos != node_name.npos)
+				J_NODE_ACCESSMODE access_mode;
+				retval = J_Node_GetAccessMode(h_node, &access_mode);
+				if (retval == J_ST_SUCCESS)
 				{
-					this->exposuretime_node_name = subfeature_name_string;
-					std::cout << "Exposuretime node found: " << this->exposuretime_node_name << std::endl;
+					if ((access_mode == J_NODE_ACCESSMODE::RO) || (access_mode == J_NODE_ACCESSMODE::RW) || (access_mode == J_NODE_ACCESSMODE::WO))
+					{
+						std::string node_name = subfeature_name_string;
+						std::transform(node_name.begin(), node_name.end(), node_name.begin(), ::tolower);
+						int found_pos = node_name.find("exposure");
+						if (found_pos != node_name.npos)
+						{
+							this->exposuretime_node_name = subfeature_name_string;
+							std::cout << "Exposuretime node found: " << this->exposuretime_node_name << std::endl;
+						};
+					};
 				};
 			};
 
@@ -1085,7 +1093,7 @@ int JaiGenicamCameraControl::set_node_to_camera(GenicamGenericNode generic_node)
 	J_STATUS_TYPE		retval;
 	std::stringstream	err_msg;
 
-	bool debug_output = true;
+	bool debug_output = false;
 
 	if (debug_output == true)
 	{
@@ -1319,6 +1327,12 @@ int JaiGenicamCameraControl::start_camera_acquisition()
 	std::cout << "Image parameters: " << std::endl << "  height..." << image_height << std::endl << "   width..." << image_width
 		<< std::endl << "     bpp..." << bpp << std::endl << "    size..." << (image_height*image_width*bpp)/8 << std::endl;
 
+	int8_t          transportlayer_s[J_FACTORY_INFO_SIZE];
+	uint32_t        size;
+	size = J_FACTORY_INFO_SIZE;
+	retval = J_Camera_GetTransportLayerName(this->camera_handle, transportlayer_s, &size);
+	std::cout << "J_Camera_GetTransportLayerName: retval " << this->get_error_string(retval) << ", string " << transportlayer_s << std::endl;
+
 	// Open stream
 	retval = J_Image_OpenStream(this->camera_handle, 0, 
 		reinterpret_cast<J_IMG_CALLBACK_OBJECT>(this), 
@@ -1359,20 +1373,73 @@ int JaiGenicamCameraControl::stop_camera_acquisition()
 
 	J_STATUS_TYPE retval;
 	std::stringstream err_msg;
-	
+	J_NODE_ACCESSMODE access_mode;
+	NODE_HANDLE node_handle;
 
 	// Lock the mutex to keep start_capture to execute while we are still stopping
 	std::unique_lock<std::mutex> lock(this->camera_mutex);	
 	// Stop Acquisition
 	if (this->camera_handle != NULL) 
 	{
-		retval = J_Camera_ExecuteCommand(this->camera_handle, NODE_NAME_ACQSTOP);
+		retval = J_Camera_GetNodeByName(this->camera_handle, NODE_NAME_ACQSTOP, &node_handle);
 		if (retval != J_ST_SUCCESS)
 		{
-			err_msg << "Could not Stop Acquisition! " << this->get_error_string(retval) << std::endl;
-			std::cout << err_msg.str();
-			this->set_error_data("stop_camera_acquisition", "J_Camera_ExecuteCommand", err_msg.str(), retval, CameraState::NO_STATE, false);
-			return retval;
+			std::cout << "Acq stop get node handle fail " << this->get_error_string(retval) << std::endl;
+		}
+		retval = J_Node_GetAccessMode(node_handle, &access_mode);						
+		if (retval != J_ST_SUCCESS)
+		{
+			std::cout << "Acq stop access mode fail " << this->get_error_string(retval) << std::endl;
+		}
+		else
+		{
+			switch (access_mode)
+			{
+			case J_NODE_ACCESSMODE::NA:
+				std::cout << "Acq stop access NA (" << access_mode << ")" << std::endl;
+				break;
+			case J_NODE_ACCESSMODE::NI:
+				std::cout << "Acq stop access NI (" << access_mode << ")" << std::endl;
+				break;
+			case J_NODE_ACCESSMODE::RO:
+				std::cout << "Acq stop access RO (" << access_mode << ")" << std::endl;
+				break;
+			case J_NODE_ACCESSMODE::RW:
+				std::cout << "Acq stop access RW (" << access_mode << ")" << std::endl;
+				break;
+			case J_NODE_ACCESSMODE::WO:
+				std::cout << "Acq stop access WO (" << access_mode << ")" << std::endl;
+				break;
+			default:
+				std::cout << "Acq stop access undefined (" << access_mode << ")" << std::endl;
+				break;
+			}
+		}
+
+		if ((access_mode == J_NODE_ACCESSMODE::RW) || (access_mode == J_NODE_ACCESSMODE::WO))
+		{
+			retval = J_Camera_ExecuteCommand(this->camera_handle, NODE_NAME_ACQSTOP);
+			if (retval != J_ST_SUCCESS)
+			{
+				switch (retval)
+				{
+				case J_ST_GC_ERROR:
+					tGenICamErrorInfo gc;
+					J_Factory_GetGenICamErrorInfo(&gc);
+					err_msg << gc.sNodeName << " GC Error: Failure stopping acquisition, returned " << gc.sDescription;
+					break;
+				default:
+					err_msg << "Could not Stop Acquisition! " << this->get_error_string(retval) << std::endl;
+					std::cout << err_msg.str();			
+				}
+				std::cout << err_msg.str() << std::endl;
+				this->set_error_data("stop_camera_acquisition", "J_Camera_ExecuteCommand", err_msg.str(), retval, CameraState::NO_STATE, false);
+				return retval;
+			};
+		}
+		else
+		{
+			std::cout << "Access mode not writable." << std::endl;
 		};
 		std::cout << "JaiGenicamCameraControl::stop_camera_acquisition: Acquisition stopped..." << std::endl;
 	};

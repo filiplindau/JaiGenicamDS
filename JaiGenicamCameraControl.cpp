@@ -469,7 +469,7 @@ void __stdcall JaiGenicamCameraControl::capture_stream_callback(J_tIMAGE_INFO * 
 {
 	J_STATUS_TYPE   retval;
 	std::stringstream err_msg;
-//	std::cout << "capture_stream_callback: New image acquired" << std::endl;
+	//std::cout << "capture_stream_callback: New image acquired" << std::endl;
 
 	std::unique_lock<std::mutex> lock(this->camera_mutex);
 	double frame_time;

@@ -233,6 +233,7 @@ CameraState JaiGenicamCameraControl::idle_handler(CameraState prev_state)
 	if (retval != 0)
 	{
 		err_stream << "idle_handler: Error stopping camera acquisition, returned " << this->get_error_string(retval) << std::endl;
+		std::cout << err_stream.str() << std::endl;
 		this->emit_status_message(err_stream.str());
 		new_state = CameraState::FAULT_STATE;
 	}
@@ -324,11 +325,11 @@ CameraState JaiGenicamCameraControl::idle_handler(CameraState prev_state)
 				if (this->exposuretime_node_name.empty() == false)
 				{
 					last_time = current_time;
-					std::string node_name = "ExposureTime";
+					std::string node_name = this->exposuretime_node_name;
 					retval = this->get_node(node_name, generic_node);
 					if (retval != 0)
 					{
-						err_stream << cmd_data.name_string << " not found in node map";
+						err_stream << node_name << " not found in node map";
 						this->set_error_data("idle_handler", "SET_NODE_CMD", err_stream.str(), -1, CameraState::IDLE_STATE, false);
 						new_state = CameraState::FAULT_STATE;
 						break;
@@ -463,6 +464,7 @@ CameraState JaiGenicamCameraControl::running_handler(CameraState prev_state)
 			{
 				if (this->exposuretime_node_name.empty() == false)
 				{
+					std::cout << "running_handler: Setting exposuretime in order to check the camera" << std::endl;
 					last_time = current_time;
 					std::string node_name = "ExposureTime";
 					retval = this->get_node(node_name, generic_node);
@@ -592,6 +594,14 @@ CameraState JaiGenicamCameraControl::fault_handler(CameraState prev_state)
 			{
 				std::cout << "Invalid parameter error!" << std::endl;
 				status_string = status_stream.str() + "Parameter could be wrong for the node.";
+				this->emit_status_message(status_string);
+
+				std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			}
+			else if ((error_data.retval == J_STATUS_CODES::J_ST_GC_ERROR))
+			{
+				std::cout << "GenICam error!" << std::endl;
+				status_string = status_stream.str();
 				this->emit_status_message(status_string);
 
 				std::this_thread::sleep_for(std::chrono::milliseconds(500));
