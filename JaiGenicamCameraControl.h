@@ -19,9 +19,14 @@ namespace JaiGenicamCameraControl_ns
 	#define NODE_NAME_WIDTH         (int8_t*)"Width"
 	#define NODE_NAME_HEIGHT        (int8_t*)"Height"
 	#define NODE_NAME_PIXELFORMAT   (int8_t*)"PixelFormat"
+	#define NODE_NAME_PAYLOADSIZE   (int8_t*)"PayloadSize"
 	#define NODE_NAME_GAIN          (int8_t*)"GainRaw"
 	#define NODE_NAME_ACQSTART      (int8_t*)"AcquisitionStart"
-	#define NODE_NAME_ACQSTOP       (int8_t*)"AcquisitionStop"	
+	#define NODE_NAME_ACQSTOP       (int8_t*)"AcquisitionStop"
+	#define NODE_NAME_RESET			(int8_t*)"DeviceReset"
+
+	#define USE_STREAMTHREAD		1	// Determines if we use custom stream thread function (1) or built-in J_image_openstream (0)
+	#define	NUM_OF_BUFFERS	        5
 
 	// Data structures
 	template <typename T>
@@ -105,6 +110,9 @@ namespace JaiGenicamCameraControl_ns
 		SET_EXPOSURE_CMD,
 		GET_NODE_CMD,
 		SET_NODE_CMD,
+		UPDATE_NODE_CMD,
+		RESET_CAMERA_CMD,
+		
 		NO_CMD
 	};
 
@@ -160,6 +168,12 @@ namespace JaiGenicamCameraControl_ns
 			this->capture_thread_handle = NULL;
 			this->factory_handle = NULL;
 			this->image_buffer.pImageBuffer = NULL;
+			this->stream_event_handle = NULL;
+			this->stream_handle = NULL;
+//			this->stream_thread_handle = NULL;
+			this->event_condition_handle = NULL;
+			this->stream_started = false;
+			this->enable_thread = false;
 
 			// Init frame counter
 			this->frame_counter = 0;
@@ -174,6 +188,7 @@ namespace JaiGenicamCameraControl_ns
 		// Client camera commands
 		int start_capture(void);
 		int stop_capture(void);
+		int reset(void);
 		int disconnect(void);
 		int connect(void);
 		int get_node_value(std::string name, double &value);
@@ -185,11 +200,14 @@ namespace JaiGenicamCameraControl_ns
 		int set_node_value(std::string name, std::string value);
 		int get_node_type(std::string name, std::string &type);
 		int get_node_info(std::string name, GenicamGenericNode &generic_node);
+		int get_node_map_list(std::vector<std::string> &node_map_list);
 
 		int get_image(uint32_t &width, uint32_t &height, uint16_t* image_p);
 		int get_image_info(J_tIMAGE_INFO &aq_image_info);
 		int get_framecounter(int64_t &value);
 		int get_framerate(double &value);
+
+		int update_nodeinfo(std::string node_name);
 
 		int JaiGenicamCameraControl::get_camera_list(std::vector<std::string> &camera_list);
 
@@ -201,6 +219,7 @@ namespace JaiGenicamCameraControl_ns
 		Signal<std::string>			status_message_signal;
 		Signal<GenicamErrorStruct>	error_signal;
 		Signal<CameraCommandData>	command_return_signal;
+		Signal<GenicamGenericNode>	update_node_signal;
 
 	private:
 		// Command queue and mutexes
@@ -231,6 +250,11 @@ namespace JaiGenicamCameraControl_ns
 		FACTORY_HANDLE  factory_handle;     // Factory Handle
 		CAM_HANDLE      camera_handle;      // Camera Handle
 		THRD_HANDLE		capture_thread_handle;
+//		HANDLE			stream_thread_handle;
+		std::thread		stream_thread_handle;
+		STREAM_HANDLE	stream_handle;
+		HANDLE			stream_event_handle;
+		HANDLE			event_condition_handle;
 		
 		std::string		camera_serial;
 		int8_t          camera_id_s[J_CAMERA_ID_SIZE];
@@ -266,6 +290,7 @@ namespace JaiGenicamCameraControl_ns
 
 		// Camera access
 		void __stdcall JaiGenicamCameraControl::capture_stream_callback(J_tIMAGE_INFO * aq_imageinfo_p);
+		int reset_camera();
 		int start_camera_acquisition();
 		int stop_camera_acquisition();
 		int open_camera();
@@ -278,7 +303,25 @@ namespace JaiGenicamCameraControl_ns
 		int generate_genericnode_from_name(std::string node_name, GenicamGenericNode &generic_node_result);
 		int get_node_from_camera(std::string name, GenicamGenericNode &generic_node);
 		int set_node_to_camera(GenicamGenericNode generic_node);
-		int JaiGenicamCameraControl::disable_auto_nodes();
+		int JaiGenicamCameraControl::disable_auto_nodes();		
+		int update_nodemap_nodeinfo(std::string node_name);
+
+		// Data stream functions
+		bool enable_thread;
+		bool stream_started;
+		uint32_t	valid_buffers;
+		uint8_t*    aq_buffer[NUM_OF_BUFFERS];
+		BUF_HANDLE  aq_buffer_id[NUM_OF_BUFFERS];
+		int start_datastream();
+		int stop_datastream();
+//		int create_stream_thread(uint32_t channel_id, uint32_t buffersize);
+		int terminate_stream_thread(void);   // Terminate the image acquisition thread
+		void stream_process(void);           // The actual image acquisition thread
+//		void terminate_thread(void);         
+		void wait_for_thread_to_terminate(void);
+		void close_thread_handle(void);
+		int prepare_buffer(int buffersize, uint32_t &valid_buffers);
+		int unprepare_buffer(void);
 	};
 }
 

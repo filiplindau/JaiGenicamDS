@@ -64,6 +64,8 @@ static const char *RcsId = "$Id:  $";
 //  Off            |  off
 //  On             |  on
 //  GetCameraList  |  get_camera_list
+//  Reset          |  reset
+//  GetNodeMap     |  get_node_map
 //================================================================
 
 //================================================================
@@ -80,6 +82,7 @@ static const char *RcsId = "$Id:  $";
 //  ImageOffsetX   |  Tango::DevULong	Scalar
 //  ImageOffsetY   |  Tango::DevULong	Scalar
 //  PixelFormat    |  Tango::DevString	Scalar
+//  PacketDelay    |  Tango::DevULong	Scalar
 //  Image          |  Tango::DevUShort	Image  ( max = 4096 x 4096)
 //================================================================
 
@@ -184,6 +187,7 @@ void JaiGenicamDS::delete_device()
 	delete[] attr_ImageOffsetX_read;
 	delete[] attr_ImageOffsetY_read;
 	delete[] attr_PixelFormat_read;
+	delete[] attr_PacketDelay_read;
 	delete[] attr_Image_read;
 }
 
@@ -219,6 +223,7 @@ void JaiGenicamDS::init_device()
 	attr_ImageOffsetX_read = new Tango::DevULong[1];
 	attr_ImageOffsetY_read = new Tango::DevULong[1];
 	attr_PixelFormat_read = new Tango::DevString[1];
+	attr_PacketDelay_read = new Tango::DevULong[1];
 	attr_Image_read = new Tango::DevUShort[4096*4096];
 
 	/*----- PROTECTED REGION ID(JaiGenicamDS::init_device) ENABLED START -----*/
@@ -244,7 +249,9 @@ void JaiGenicamDS::init_device()
 	*attr_FrameRate_read = 0;
 	*attr_TriggerSource_read = "";
 	*attr_FrameCounter_read = 0;
+	*attr_PacketDelay_read = 0;
 	*attr_TriggerMode_read = "";
+
 
 	this->n_buffers = 2;
 	this->last_lock_buffer_ind = 0;
@@ -257,6 +264,10 @@ void JaiGenicamDS::init_device()
 	};
 	DEBUG_STREAM << "Image buffers created " << endl;
 	this->camera_connection->image_ready_signal.connect_member(this, &JaiGenicamDS::update_image);
+
+	this->camera_connection->update_node_signal.connect_member(this, &JaiGenicamDS::update_attribute_info);
+
+	this->write_presets();
 	
 
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::init_device
@@ -290,6 +301,10 @@ void JaiGenicamDS::get_device_property()
 	dev_prop.push_back(Tango::DbDatum("offsetx_node_name"));
 	dev_prop.push_back(Tango::DbDatum("offsety_node_name"));
 	dev_prop.push_back(Tango::DbDatum("pixelformat_node_name"));
+	dev_prop.push_back(Tango::DbDatum("packetdelay_node_name"));
+	dev_prop.push_back(Tango::DbDatum("additional_node_list"));
+	dev_prop.push_back(Tango::DbDatum("framerate_node_name"));
+	dev_prop.push_back(Tango::DbDatum("node_preset_values"));
 
 	//	is there at least one property to be read ?
 	if (dev_prop.size()>0)
@@ -422,6 +437,50 @@ void JaiGenicamDS::get_device_property()
 		//	And try to extract pixelformat_node_name value from database
 		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  pixelformat_node_name;
 
+		//	Try to initialize packetdelay_node_name from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  packetdelay_node_name;
+		else {
+			//	Try to initialize packetdelay_node_name from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  packetdelay_node_name;
+		}
+		//	And try to extract packetdelay_node_name value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  packetdelay_node_name;
+
+		//	Try to initialize additional_node_list from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  additional_node_list;
+		else {
+			//	Try to initialize additional_node_list from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  additional_node_list;
+		}
+		//	And try to extract additional_node_list value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  additional_node_list;
+
+		//	Try to initialize framerate_node_name from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  framerate_node_name;
+		else {
+			//	Try to initialize framerate_node_name from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  framerate_node_name;
+		}
+		//	And try to extract framerate_node_name value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  framerate_node_name;
+
+		//	Try to initialize node_preset_values from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  node_preset_values;
+		else {
+			//	Try to initialize node_preset_values from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  node_preset_values;
+		}
+		//	And try to extract node_preset_values value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  node_preset_values;
+
 	}
 
 	/*----- PROTECTED REGION ID(JaiGenicamDS::get_device_property_after) ENABLED START -----*/
@@ -467,7 +526,7 @@ void JaiGenicamDS::check_mandatory_property(Tango::DbDatum &class_prop, Tango::D
 //--------------------------------------------------------
 void JaiGenicamDS::always_executed_hook()
 {
-//	INFO_STREAM << "JaiGenicamDS::always_executed_hook()  " << device_name << endl;
+	INFO_STREAM << "JaiGenicamDS::always_executed_hook()  " << device_name << endl;
 	if (mandatoryNotDefined)
 	{
 		string	status(get_status());
@@ -491,7 +550,7 @@ void JaiGenicamDS::always_executed_hook()
 //--------------------------------------------------------
 void JaiGenicamDS::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 {
-//	DEBUG_STREAM << "JaiGenicamDS::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
+	DEBUG_STREAM << "JaiGenicamDS::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
 	/*----- PROTECTED REGION ID(JaiGenicamDS::read_attr_hardware) ENABLED START -----*/
 	
 	//	Add your own code
@@ -647,6 +706,30 @@ void JaiGenicamDS::read_FrameRate(Tango::Attribute &attr)
 	attr.set_value(attr_FrameRate_read);
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::read_FrameRate
+}
+//--------------------------------------------------------
+/**
+ *	Write attribute FrameRate related method
+ *	Description: Frame rate of the camera when free running
+ *
+ *	Data type:	Tango::DevDouble
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void JaiGenicamDS::write_FrameRate(Tango::WAttribute &attr)
+{
+	DEBUG_STREAM << "JaiGenicamDS::write_FrameRate(Tango::WAttribute &attr) entering... " << endl;
+	//	Retrieve write value
+	Tango::DevDouble	w_val;
+	attr.get_write_value(w_val);
+	/*----- PROTECTED REGION ID(JaiGenicamDS::write_FrameRate) ENABLED START -----*/
+	int retval = this->camera_connection->set_node_value(this->framerate_node_name, w_val);
+	if (retval != 0)
+	{
+		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
+	}
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::write_FrameRate
 }
 //--------------------------------------------------------
 /**
@@ -845,11 +928,15 @@ void JaiGenicamDS::write_ImageHeight(Tango::WAttribute &attr)
 	Tango::DevULong	w_val;
 	attr.get_write_value(w_val);
 	/*----- PROTECTED REGION ID(JaiGenicamDS::write_ImageHeight) ENABLED START -----*/
-	int retval = this->camera_connection->set_node_value(this->height_node_name, (int64_t)w_val);
+	int retval;
+	
+	retval = this->camera_connection->set_node_value(this->height_node_name, (int64_t)w_val);
 	if (retval != 0)
 	{
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
 	}
+	
+	retval = this->camera_connection->update_nodeinfo(this->offsety_node_name);
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::write_ImageHeight
 }
@@ -905,7 +992,7 @@ void JaiGenicamDS::write_ImageWidth(Tango::WAttribute &attr)
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
 	}
 
-	
+	retval = this->camera_connection->update_nodeinfo(this->offsetx_node_name);
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::write_ImageWidth
 }
 //--------------------------------------------------------
@@ -957,7 +1044,7 @@ void JaiGenicamDS::write_ImageOffsetX(Tango::WAttribute &attr)
 	{
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
 	}
-	
+	retval = this->camera_connection->update_nodeinfo(this->width_node_name);
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::write_ImageOffsetX
 }
 //--------------------------------------------------------
@@ -1010,7 +1097,7 @@ void JaiGenicamDS::write_ImageOffsetY(Tango::WAttribute &attr)
 	{
 		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
 	}
-	
+	retval = this->camera_connection->update_nodeinfo(this->height_node_name);
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::write_ImageOffsetY
 }
 //--------------------------------------------------------
@@ -1074,6 +1161,61 @@ void JaiGenicamDS::write_PixelFormat(Tango::WAttribute &attr)
 	}
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::write_PixelFormat
+}
+//--------------------------------------------------------
+/**
+ *	Read attribute PacketDelay related method
+ *	Description: Controls the delay (in GEV timestamp counter unit) to insert between
+ *               each packet for this stream channel.
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void JaiGenicamDS::read_PacketDelay(Tango::Attribute &attr)
+{
+	DEBUG_STREAM << "JaiGenicamDS::read_PacketDelay(Tango::Attribute &attr) entering... " << endl;
+	/*----- PROTECTED REGION ID(JaiGenicamDS::read_PacketDelay) ENABLED START -----*/
+	//	Set the attribute value
+	int64_t value;	
+	int retval = this->camera_connection->get_node_value(this->packetdelay_node_name, value);
+	*attr_PacketDelay_read = (Tango::DevULong)value;
+	if (retval == 0)
+	{
+		attr.set_value(attr_PacketDelay_read);
+	}
+	else
+	{
+		attr.set_value(attr_PacketDelay_read);
+		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
+	}
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::read_PacketDelay
+}
+//--------------------------------------------------------
+/**
+ *	Write attribute PacketDelay related method
+ *	Description: Controls the delay (in GEV timestamp counter unit) to insert between
+ *               each packet for this stream channel.
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void JaiGenicamDS::write_PacketDelay(Tango::WAttribute &attr)
+{
+	DEBUG_STREAM << "JaiGenicamDS::write_PacketDelay(Tango::WAttribute &attr) entering... " << endl;
+	//	Retrieve write value
+	Tango::DevULong	w_val;
+	attr.get_write_value(w_val);
+	/*----- PROTECTED REGION ID(JaiGenicamDS::write_PacketDelay) ENABLED START -----*/
+	int retval = this->camera_connection->set_node_value(this->packetdelay_node_name, (int64_t)w_val);
+	if (retval != 0)
+	{
+		attr.set_quality(Tango::AttrQuality::ATTR_INVALID);
+	}
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::write_PacketDelay
 }
 //--------------------------------------------------------
 /**
@@ -1248,11 +1390,73 @@ Tango::DevVarStringArray *JaiGenicamDS::get_camera_list()
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::get_camera_list
 	return argout;
 }
+//--------------------------------------------------------
+/**
+ *	Command Reset related method
+ *	Description: Send reset command to camera. There is a chance that 
+ *               this clears a hung camera.
+ *
+ */
+//--------------------------------------------------------
+void JaiGenicamDS::reset()
+{
+	DEBUG_STREAM << "JaiGenicamDS::Reset()  - " << device_name << endl;
+	/*----- PROTECTED REGION ID(JaiGenicamDS::reset) ENABLED START -----*/
+	
+	this->camera_connection->reset();
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::reset
+}
+//--------------------------------------------------------
+/**
+ *	Command GetNodeMap related method
+ *	Description: 
+ *
+ *	@returns 
+ */
+//--------------------------------------------------------
+Tango::DevVarStringArray *JaiGenicamDS::get_node_map()
+{
+	Tango::DevVarStringArray *argout;
+	DEBUG_STREAM << "JaiGenicamDS::GetNodeMap()  - " << device_name << endl;
+	/*----- PROTECTED REGION ID(JaiGenicamDS::get_node_map) ENABLED START -----*/
+	std::vector<std::string> node_map_list;
+	int retval = this->camera_connection->get_node_map_list(node_map_list);
+	argout = new Tango::DevVarStringArray();
+	
+	DEBUG_STREAM << "JaiGenicamDS::GetCameraList() node list length " << node_map_list.size() << endl;
+	if (retval == 0)
+	{
+		argout->length(node_map_list.size());
+		for (int i=0; i<node_map_list.size(); i++)
+		{
+			(*argout)[i] = CORBA::string_dup(node_map_list[i].c_str());
+		}
+	}
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::get_node_map
+	return argout;
+}
 
 /*----- PROTECTED REGION ID(JaiGenicamDS::namespace_ending) ENABLED START -----*/
 
 //	Additional Methods
-void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string tango_attribute_name)
+void JaiGenicamDS::update_attribute_info(::JaiGenicamCameraControl_ns::GenicamGenericNode generic_node)
+{
+	DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: Entering..." << endl;
+	std::string tango_attribute_name;
+	for (auto const x: this->node_map)
+	{
+		if (x.second.name == generic_node.name)
+		{
+			DEBUG_STREAM << "Found tango attribute name" << endl;
+			tango_attribute_name = x.first;
+			this->update_attribute_info(generic_node.name, tango_attribute_name, false);
+		}
+	}
+} // JaiGenicamDS::update_attribute_info
+
+
+void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string tango_attribute_name, bool set_memorized)
 {
 	DEBUG_STREAM << "------------------------------------------------------" << endl << " ---    Updating attribute info for " << tango_attribute_name << "    ---" << endl;
 
@@ -1297,23 +1501,26 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 		multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_write_value(int_value);
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Write value: " << int_value;
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Mem value: " << multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value();
-		try
+		if (set_memorized == true)
 		{
-			mem_value = std::stoi(multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value());
-			DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "mem value converted";
-
-			if (generic_node.min_value_i <= mem_value && generic_node.max_value_i >= mem_value)
+			try
 			{
-				retval = this->camera_connection->set_node_value(genicam_name, (int64_t)mem_value);
-				if (retval != 0)
+				mem_value = std::stoi(multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value());
+				DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "mem value converted";
+
+				if (generic_node.min_value_i <= mem_value && generic_node.max_value_i >= mem_value)
 				{
-					ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in set_node_value, returned" << retval << endl;
+					retval = this->camera_connection->set_node_value(genicam_name, (int64_t)mem_value);
+					if (retval != 0)
+					{
+						ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in set_node_value, returned" << retval << endl;
+					};
 				};
-			};
-		}
-		catch (...)
-		{
-			DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Could not retrieve mem value";
+			}
+			catch (...)
+			{
+				DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Could not retrieve mem value";
+			}
 		}
 		// Only update min, max if the values are consistent
 		if (generic_node.min_value_i < generic_node.max_value_i)
@@ -1337,23 +1544,26 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 		multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_write_value(double_value);
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Write value: " << double_value;
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Mem value: " << multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value();
-		try
+		if (set_memorized == true)
 		{
-			mem_value = std::stod(multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value());
-			DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "mem value d converted";
-
-			if (generic_node.min_value_d <= mem_value && generic_node.max_value_d >= mem_value)
+			try
 			{
-				retval = this->camera_connection->set_node_value(genicam_name, (double)mem_value);
-				if (retval != 0)
+				mem_value = std::stod(multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value());
+				DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "mem value d converted";
+
+				if (generic_node.min_value_d <= mem_value && generic_node.max_value_d >= mem_value)
 				{
-					ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in set_node_value, returned" << retval << endl;
+					retval = this->camera_connection->set_node_value(genicam_name, (double)mem_value);
+					if (retval != 0)
+					{
+						ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in set_node_value, returned" << retval << endl;
+					};
 				};
-			};
-		}
-		catch (...)
-		{
-			DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Could not retrieve mem value d";
+			}
+			catch (...)
+			{
+				DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Could not retrieve mem value d";
+			}
 		}
 		/*
 		retval = this->camera_connection->set_node_value(genicam_name, (double)double_value);
@@ -1406,13 +1616,15 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 		multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_write_value(string_value);
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Write value: " << string_value;
 		DEBUG_STREAM << "JaiGenicamDS::update_attribute_info: " << generic_node.name << " " << "Mem value: " << multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value();
-		mem_value = multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value().c_str();
-		retval = this->camera_connection->set_node_value(genicam_name, mem_value);
-		if (retval != 0)
+		if (set_memorized == true)
 		{
-			ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in set_node_value, returned" << retval << endl;
-		};
-		
+			mem_value = multi_attr->get_w_attr_by_name(tango_attribute_name.c_str()).get_mem_value().c_str();
+			retval = this->camera_connection->set_node_value(genicam_name, mem_value);
+			if (retval != 0)
+			{
+				ERROR_STREAM << "JaiGenicamDS::update_attribute_info: Error in set_node_value, returned" << retval << endl;
+			};
+		}		
 	}
 
 	// Finally write the config list back:
@@ -1422,6 +1634,62 @@ void JaiGenicamDS::update_attribute_info(std::string genicam_name, std::string t
 
 	
 } // JaiGenicamDS::update_attribute_info
+
+
+void JaiGenicamDS::write_presets()
+{
+	DEBUG_STREAM << "JaiGenicamDS::write_presets: Entering write_presets" << endl;
+	std::stringstream convert_stream;
+	if (this->node_preset_values.empty() == false)
+	{
+		if (this->node_preset_values.size() % 2 != 0)
+		{
+			Tango::Except::throw_exception("PROPERTIES FAILURE", "Node preset list contains an odd number of items. Entries must be made in pairs", "write_presets");
+		}
+		std::string name;
+		std::string value;
+		int value_i;
+		double value_d;
+		std::string value_s;
+		int retval;
+		for (unsigned int i = 0;i < this->node_preset_values.size(); i = i + 2)
+		{
+			name = this->node_preset_values[i];
+			value = this->node_preset_values[i+1];
+			DEBUG_STREAM << "JaiGenicamDS::write_presets: Setting node " << name << " to " << value << endl;
+			convert_stream.clear();
+			convert_stream.str("");
+			convert_stream << value;
+			convert_stream >> value_i;
+			if (convert_stream.fail() == false)
+			{
+				retval = this->camera_connection->set_node_value(name, (int64_t)value_i);
+			}
+			else
+			{
+				DEBUG_STREAM << "JaiGenicamDS::write_presets: not integer " << endl;
+				convert_stream.clear();
+//				convert_stream << value;
+				convert_stream >> value_d;
+				if (convert_stream.fail() == false)
+				{
+					retval = this->camera_connection->set_node_value(name, value_d);
+				}
+				else
+				{
+					DEBUG_STREAM << "JaiGenicamDS::write_presets: not double " << endl;
+					value_s = value;
+					retval = this->camera_connection->set_node_value(name, value_s);
+				}
+			}
+			
+			if (retval != 0)
+			{
+				ERROR_STREAM << "Error setting node " << name << " to " << value << ", returned " << retval << endl;
+			}
+		}
+	}
+}; // JaiGenicamDS::write_presets
 
 
 void JaiGenicamDS::update_state(::JaiGenicamCameraControl_ns::CameraState camera_state)
@@ -1445,16 +1713,17 @@ void JaiGenicamDS::update_state(::JaiGenicamCameraControl_ns::CameraState camera
 			std::string tango_attribute_name;
 						
 			tango_attribute_name = this->gain_node_name;
-			this->update_attribute_info(tango_attribute_name, "gain");
+			this->update_attribute_info(tango_attribute_name, "gain", true);
 			
-			this->update_attribute_info(this->exposuretime_node_name, "exposuretime");
-			this->update_attribute_info(this->triggermode_node_name, "triggermode");
-			this->update_attribute_info(this->triggersource_node_name, "triggersource");
-			this->update_attribute_info(this->width_node_name, "imagewidth");
-			this->update_attribute_info(this->height_node_name, "imageheight");			
-			this->update_attribute_info(this->offsetx_node_name, "imageoffsetx");			
-			this->update_attribute_info(this->offsety_node_name, "imageoffsety");
-			this->update_attribute_info(this->pixelformat_node_name, "pixelformat");
+			this->update_attribute_info(this->exposuretime_node_name, "exposuretime", true);
+			this->update_attribute_info(this->triggermode_node_name, "triggermode", true);
+			this->update_attribute_info(this->triggersource_node_name, "triggersource", true);
+			this->update_attribute_info(this->width_node_name, "imagewidth", true);
+			this->update_attribute_info(this->height_node_name, "imageheight", true);
+			this->update_attribute_info(this->offsetx_node_name, "imageoffsetx", true);
+			this->update_attribute_info(this->offsety_node_name, "imageoffsety", true);
+			this->update_attribute_info(this->pixelformat_node_name, "pixelformat", true);
+			this->update_attribute_info(this->packetdelay_node_name, "packetdelay", true);
 			
 			this->attribute_info_init_flag = true;
 		};
@@ -1525,6 +1794,9 @@ void JaiGenicamDS::update_image(int framecounter)
 	};
 //	DEBUG_STREAM << "update_image exit" << endl;
 }; // JaiGenicamDS::update_image
+
+
+
 
 /*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::namespace_ending
 } //	namespace

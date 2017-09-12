@@ -103,6 +103,10 @@ bool JaiGenicamDS::is_Gain_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool JaiGenicamDS::is_FrameRate_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
+	//	Not any excluded states for FrameRate attribute in Write access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::FrameRateStateAllowed_WRITE) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::FrameRateStateAllowed_WRITE
 
 	//	Not any excluded states for FrameRate attribute in read access.
 	/*----- PROTECTED REGION ID(JaiGenicamDS::FrameRateStateAllowed_READ) ENABLED START -----*/
@@ -328,6 +332,26 @@ bool JaiGenicamDS::is_PixelFormat_allowed(TANGO_UNUSED(Tango::AttReqType type))
 
 //--------------------------------------------------------
 /**
+ *	Method      : JaiGenicamDS::is_PacketDelay_allowed()
+ *	Description : Execution allowed for PacketDelay attribute
+ */
+//--------------------------------------------------------
+bool JaiGenicamDS::is_PacketDelay_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+	//	Not any excluded states for PacketDelay attribute in Write access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::PacketDelayStateAllowed_WRITE) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::PacketDelayStateAllowed_WRITE
+
+	//	Not any excluded states for PacketDelay attribute in read access.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::PacketDelayStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::PacketDelayStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
  *	Method      : JaiGenicamDS::is_Image_allowed()
  *	Description : Execution allowed for Image attribute
  */
@@ -437,6 +461,41 @@ bool JaiGenicamDS::is_GetCameraList_allowed(TANGO_UNUSED(const CORBA::Any &any))
 	/*----- PROTECTED REGION ID(JaiGenicamDS::GetCameraListStateAllowed) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::GetCameraListStateAllowed
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : JaiGenicamDS::is_Reset_allowed()
+ *	Description : Execution allowed for Reset attribute
+ */
+//--------------------------------------------------------
+bool JaiGenicamDS::is_Reset_allowed(TANGO_UNUSED(const CORBA::Any &any))
+{
+	//	Compare device state with not allowed states.
+	if (get_state()==Tango::UNKNOWN ||
+		get_state()==Tango::OFF)
+	{
+	/*----- PROTECTED REGION ID(JaiGenicamDS::ResetStateAllowed) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::ResetStateAllowed
+		return false;
+	}
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : JaiGenicamDS::is_GetNodeMap_allowed()
+ *	Description : Execution allowed for GetNodeMap attribute
+ */
+//--------------------------------------------------------
+bool JaiGenicamDS::is_GetNodeMap_allowed(TANGO_UNUSED(const CORBA::Any &any))
+{
+	//	Not any excluded states for GetNodeMap command.
+	/*----- PROTECTED REGION ID(JaiGenicamDS::GetNodeMapStateAllowed) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::GetNodeMapStateAllowed
 	return true;
 }
 

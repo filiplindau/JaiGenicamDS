@@ -41,8 +41,17 @@ int JaiGenicamCameraControl::get_node(std::string node_name, GenicamGenericNode 
 	{
 		node.name = node_name;
 		node.valid = false;
-		return -1;
+		return J_ST_INVALID_ID;
 	};
+	if (node.valid == true)
+	{
+		return 0;
+	}
+	else
+	{
+		std::cout << "get_node: Found invalid node: " << node_name << std::endl;
+		return J_ST_INVALID_PARAMETER;
+	}
 	return 0;
 };
 
@@ -63,7 +72,30 @@ int JaiGenicamCameraControl::get_node_value(std::string name, double &value)
 		value = 0;
 		return -1;
 	};
-	value = node.value_d;
+	switch (node.type)
+	{
+	case J_IFloat:
+		value = node.value_d;
+		break;
+	case J_IInteger:
+	case J_IBoolean:
+		value = node.value_i;
+		break;
+	default:
+		node.name = name;
+		node.valid = false;
+		value = 0;
+		return -2;
+	};
+	if (node.valid == true)
+	{
+		return 0;
+	}
+	else
+	{
+		std::cout << "get_node_value: Found invalid node: " << name << std::endl;
+		return -3;
+	}
 	return 0;
 };
 
@@ -84,6 +116,15 @@ int JaiGenicamCameraControl::get_node_value(std::string name, int64_t &value)
 		return -1;
 	};
 	value = node.value_i;
+	if (node.valid == true)
+	{
+		return 0;
+	}
+	else
+	{
+		std::cout << "get_node_value: Found invalid node: " << name << std::endl;
+		return -1;
+	}
 	return 0;
 };
 
@@ -211,6 +252,20 @@ int JaiGenicamCameraControl::get_node_type(std::string name, std::string &type)
 };
 
 
+/** Re-read info from camera for a specific node and update the information in the node map.
+This can be used e.g. if limits for a node have changed due to writing another node (such as 
+width - offset_x).
+*/
+int JaiGenicamCameraControl::update_nodeinfo(std::string node_name)
+{
+	CameraCommandData cmd_data;
+	cmd_data.command = CameraCommand::UPDATE_NODE_CMD;
+	cmd_data.name_string = node_name;
+	this->send_command(cmd_data);
+	return 0;
+} // JaiGenicamCameraControl::update_nodemap_node
+
+
 /** Add a command on the queue to set a node to the value in the GenicamGenericNode.
 Then add another command to read the node back to the cached list.
 */
@@ -245,6 +300,14 @@ int JaiGenicamCameraControl::stop_capture()
 {
 	CameraCommandData cmd_data;
 	cmd_data.command = CameraCommand::STOP_CAPTURE_CMD;
+	this->send_command(cmd_data);
+	return 0;
+};
+
+int JaiGenicamCameraControl::reset()
+{
+	CameraCommandData cmd_data;
+	cmd_data.command = CameraCommand::RESET_CAMERA_CMD;
 	this->send_command(cmd_data);
 	return 0;
 };

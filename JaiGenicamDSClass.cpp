@@ -247,6 +247,41 @@ CORBA::Any *GetCameraListClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(
 	return insert((static_cast<JaiGenicamDS *>(device))->get_camera_list());
 }
 
+//--------------------------------------------------------
+/**
+ * method : 		ResetClass::execute()
+ * description : 	method to trigger the execution of the command.
+ *
+ * @param	device	The device on which the command must be executed
+ * @param	in_any	The command input data
+ *
+ *	returns The command output data (packed in the Any object)
+ */
+//--------------------------------------------------------
+CORBA::Any *ResetClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
+{
+	cout2 << "ResetClass::execute(): arrived" << endl;
+	((static_cast<JaiGenicamDS *>(device))->reset());
+	return new CORBA::Any();
+}
+
+//--------------------------------------------------------
+/**
+ * method : 		GetNodeMapClass::execute()
+ * description : 	method to trigger the execution of the command.
+ *
+ * @param	device	The device on which the command must be executed
+ * @param	in_any	The command input data
+ *
+ *	returns The command output data (packed in the Any object)
+ */
+//--------------------------------------------------------
+CORBA::Any *GetNodeMapClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
+{
+	cout2 << "GetNodeMapClass::execute(): arrived" << endl;
+	return insert((static_cast<JaiGenicamDS *>(device))->get_node_map());
+}
+
 
 //===================================================================
 //	Properties management
@@ -443,6 +478,60 @@ void JaiGenicamDSClass::set_default_property()
 	prop_def  = "PixelFormat";
 	vect_data.clear();
 	vect_data.push_back("PixelFormat");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "packetdelay_node_name";
+	prop_desc = "Name of packet delay node in the camera genicam node tree.\nNormally ``GevSCPD``";
+	prop_def  = "GevSCPD";
+	vect_data.clear();
+	vect_data.push_back("GevSCPD");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "additional_node_list";
+	prop_desc = "Add node names in this array for additional nodes to map to attributes.\nNodes are added in string pairs, the first being the node name and the\nsecond being the node type (DoubleDynAttr, LongDynAttr, StringDynAttr).\n\nEnumerated type should be specified as StringDynAttr.\n\nEx.: \nTriggerDelay\nDoubleDynAttr";
+	prop_def  = "";
+	vect_data.clear();
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "framerate_node_name";
+	prop_desc = "Name of framerate node in the camera genicam node tree.\nNormally ``AcquisitionFrameRate`` or ``AcquisitionFrameRateAbs``";
+	prop_def  = "AcquisitionFrameRate";
+	vect_data.clear();
+	vect_data.push_back("AcquisitionFrameRate");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "node_preset_values";
+	prop_desc = "Add node names in this array for additional nodes that should have preset values.\nNodes are added in string pairs, the first being the node name and the\nsecond being the value.\n\nEnumerated node are specified with the enumeration name. \nBoolean nodes are specified with an integer (0=false, 1=true).\n\nEx.: \nAcquisitionFrameRateEnabled\n1";
+	prop_def  = "";
+	vect_data.clear();
 	if (prop_def.length()>0)
 	{
 		Tango::DbDatum	data(prop_name);
@@ -727,7 +816,8 @@ void JaiGenicamDSClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	framerate->set_default_properties(framerate_prop);
 	//	Not Polled
 	framerate->set_disp_level(Tango::OPERATOR);
-	//	Not Memorized
+	framerate->set_memorized();
+	framerate->set_memorized_init(true);
 	att_list.push_back(framerate);
 
 	//	Attribute : TriggerSource
@@ -929,6 +1019,31 @@ void JaiGenicamDSClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	pixelformat->set_memorized_init(true);
 	att_list.push_back(pixelformat);
 
+	//	Attribute : PacketDelay
+	PacketDelayAttrib	*packetdelay = new PacketDelayAttrib();
+	Tango::UserDefaultAttrProp	packetdelay_prop;
+	packetdelay_prop.set_description("Controls the delay (in GEV timestamp counter unit) to insert between\neach packet for this stream channel.");
+	packetdelay_prop.set_label("Packet delay");
+	packetdelay_prop.set_unit("tics");
+	//	standard_unit	not set for PacketDelay
+	//	display_unit	not set for PacketDelay
+	//	format	not set for PacketDelay
+	//	max_value	not set for PacketDelay
+	//	min_value	not set for PacketDelay
+	//	max_alarm	not set for PacketDelay
+	//	min_alarm	not set for PacketDelay
+	//	max_warning	not set for PacketDelay
+	//	min_warning	not set for PacketDelay
+	//	delta_t	not set for PacketDelay
+	//	delta_val	not set for PacketDelay
+	
+	packetdelay->set_default_properties(packetdelay_prop);
+	//	Not Polled
+	packetdelay->set_disp_level(Tango::EXPERT);
+	packetdelay->set_memorized();
+	packetdelay->set_memorized_init(true);
+	att_list.push_back(packetdelay);
+
 	//	Attribute : Image
 	ImageAttrib	*image = new ImageAttrib();
 	Tango::UserDefaultAttrProp	image_prop;
@@ -1021,6 +1136,24 @@ void JaiGenicamDSClass::command_factory()
 			"",
 			Tango::OPERATOR);
 	command_list.push_back(pGetCameraListCmd);
+
+	//	Command Reset
+	ResetClass	*pResetCmd =
+		new ResetClass("Reset",
+			Tango::DEV_VOID, Tango::DEV_VOID,
+			"",
+			"",
+			Tango::OPERATOR);
+	command_list.push_back(pResetCmd);
+
+	//	Command GetNodeMap
+	GetNodeMapClass	*pGetNodeMapCmd =
+		new GetNodeMapClass("GetNodeMap",
+			Tango::DEV_VOID, Tango::DEVVAR_STRINGARRAY,
+			"",
+			"",
+			Tango::OPERATOR);
+	command_list.push_back(pGetNodeMapCmd);
 
 	/*----- PROTECTED REGION ID(JaiGenicamDSClass::command_factory_after) ENABLED START -----*/
 	

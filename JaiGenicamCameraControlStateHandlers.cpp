@@ -255,7 +255,7 @@ CameraState JaiGenicamCameraControl::idle_handler(CameraState prev_state)
 				break;
 
 			case CameraCommand::GET_NODE_CMD:
-//				std::cout << " Idle_handler GET_NODE_CMD " << cmd_data.name_string << std::endl;
+				std::cout << " Idle_handler GET_NODE_CMD " << cmd_data.name_string << std::endl;
 				retval = this->generate_genericnode_from_name(cmd_data.name_string, generic_node);
 				if (retval != 0)
 				{
@@ -263,6 +263,7 @@ CameraState JaiGenicamCameraControl::idle_handler(CameraState prev_state)
 					new_state = CameraState::FAULT_STATE;
 					std::stringstream err_stream;
 					err_stream << "idle_handler: Error generate_generic_node_from_name " << cmd_data.name_string << ", returned " << this->get_error_string(retval) << std::endl;
+					std::cout << err_stream.str() << std::endl;
 //					this->emit_status_message(err_stream.str());
 				}
 				else
@@ -279,10 +280,25 @@ CameraState JaiGenicamCameraControl::idle_handler(CameraState prev_state)
 				retval = this->get_node(cmd_data.name_string, generic_node);
 				if (retval != 0)
 				{
-					err_stream << cmd_data.name_string << " not found in node map";
-					this->set_error_data("idle_handler", "SET_NODE_CMD", err_stream.str(), -1, CameraState::IDLE_STATE, false);
-					new_state = CameraState::FAULT_STATE;
-					break;
+					switch (retval)
+					{
+					case J_ST_INVALID_ID:
+						err_stream << cmd_data.name_string << " not found in node map";
+						this->set_error_data("idle_handler", "SET_NODE_CMD", err_stream.str(), -1, CameraState::IDLE_STATE, true);
+						break;
+						goto switch_command_exit;
+						
+					case J_ST_INVALID_PARAMETER:
+						err_stream << cmd_data.name_string << " node invalid";
+						this->set_error_data("idle_handler", "SET_NODE_CMD", err_stream.str(), -1, CameraState::IDLE_STATE, true);
+						break;
+						goto switch_command_exit;
+					default:
+						err_stream << cmd_data.name_string << " get_node error";
+						this->set_error_data("idle_handler", "SET_NODE_CMD", err_stream.str(), -1, CameraState::IDLE_STATE, false);
+						new_state = CameraState::FAULT_STATE;
+						goto switch_command_exit;
+					}
 				}
 				
 				generic_node.name = cmd_data.name_string;
@@ -293,13 +309,105 @@ CameraState JaiGenicamCameraControl::idle_handler(CameraState prev_state)
 				retval = this->set_node_to_camera(generic_node);
 				if (retval != 0)
 				{
-					this->set_error_state(CameraState::IDLE_STATE);
-					new_state = CameraState::FAULT_STATE;
-					std::stringstream err_stream;
-					err_stream << "idle_handler: Error set_node_to_camera " << cmd_data.name_string << ", returned " << this->get_error_string(retval) << std::endl;
-					std::cout << err_stream.str();
-//					this->emit_status_message(err_stream.str());
-				};
+					GenicamErrorStruct error_data = this->get_error_data();
+					std::cout << "Idle_handler: set_node_to_camera returned error " << error_data.error_message << std::endl;
+					switch (retval)
+					{
+					case J_ST_GC_ERROR:
+						
+						if (error_data.error_message.find("Write") != std::string::npos)
+						{
+							std::cout << "Idle_handler: skipping write error" << std::endl;
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << error_data.error_message;
+							this->emit_status_message(err_stream.str());
+							break;
+						}
+						else if (error_data.error_message.find("Read") != std::string::npos)
+						{
+							std::cout << "Idle_handler: skipping read error" << std::endl;
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << error_data.error_message;
+							this->emit_status_message(err_stream.str());
+							break;
+						}
+						else if (error_data.error_message.find("writable") != std::string::npos)
+						{
+							std::cout << "Idle_handler: skipping writable error" << std::endl;
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << error_data.error_message;
+							this->emit_status_message(err_stream.str());
+							break;
+						}
+						else
+						{
+							tGenICamErrorInfo gc;
+							J_Factory_GetGenICamErrorInfo(&gc);
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << "Idle_handler: " << gc.sNodeName << " GC Error: Failure getting node unit, returned " << gc.sDescription;
+							std::cout << err_stream.str() << std::endl;
+							break;
+						}
+					default:
+						this->set_error_state(CameraState::IDLE_STATE);
+						new_state = CameraState::FAULT_STATE;
+						std::stringstream err_stream;
+						err_stream << "idle_handler: Error set_node_to_camera " << cmd_data.name_string << ", returned " << this->get_error_string(retval) << std::endl;
+						std::cout << err_stream.str();
+//						this->emit_status_message(err_stream.str());
+					}
+				}
+				else
+				{
+					// set_node_to_camera worked. Store new value in map
+					lock.lock();
+					generic_node = this->node_map[cmd_data.name_string];
+					generic_node.valid = true;
+//					this->node_map[cmd_data.name_string] = generic_node;
+					lock.unlock();
+				}
+				break;
+
+			case CameraCommand::UPDATE_NODE_CMD:	
+				std::cout << " Idle_handler UPDATE_NODE_CMD " << cmd_data.name_string << std::endl;
+				retval = this->update_nodemap_nodeinfo(cmd_data.name_string);
+				if (retval != 0)
+				{
+					switch (retval)
+					{	
+					case J_ST_GC_ERROR:
+						
+						if (error_data.error_message.find("Write") != std::string::npos)
+						{
+							std::cout << "Idle_handler: update_nodemap_nodeinfo skipping write error" << std::endl;
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << error_data.error_message;
+							this->emit_status_message(err_stream.str());
+							break;
+						}
+						else
+						{
+							tGenICamErrorInfo gc;
+							J_Factory_GetGenICamErrorInfo(&gc);
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << "Idle_handler: " << gc.sNodeName << " GC Error: Failure getting node unit, returned " << gc.sDescription;
+							std::cout << err_stream.str() << std::endl;
+							break;
+						}
+					default:
+						this->set_error_state(CameraState::IDLE_STATE);
+						new_state = CameraState::FAULT_STATE;
+						std::stringstream err_stream;
+						err_stream << "idle_handler: Error, update_nodemap_nodeinfo " << cmd_data.name_string << ", returned " << this->get_error_string(retval) << std::endl;
+						std::cout << err_stream.str();
+					}
+				}
 				break;
 
 			case CameraCommand::START_CAPTURE_CMD:
@@ -309,11 +417,38 @@ CameraState JaiGenicamCameraControl::idle_handler(CameraState prev_state)
 				new_state = CameraState::DISCONNECTED_STATE;
 				break;
 
+			case CameraCommand::RESET_CAMERA_CMD:
+				retval = this->reset_camera();
+				if (retval != 0)
+				{
+					switch (retval)
+					{	
+					case J_ST_GC_ERROR:
+						
+						if (error_data.error_message.find("Write") != std::string::npos)
+						{
+							std::cout << "Idle_handler: reset_camera skipping write error" << std::endl;
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << error_data.error_message;
+							this->emit_status_message(err_stream.str());
+							break;
+						}
+					default:
+						this->set_error_state(CameraState::IDLE_STATE);
+						new_state = CameraState::FAULT_STATE;
+						std::stringstream err_stream;
+						err_stream << "idle_handler: Error, reset_camera " << cmd_data.name_string << ", returned " << this->get_error_string(retval) << std::endl;
+						std::cout << err_stream.str();
+					}
+				}
+				break;
+
 			case CameraCommand::NO_CMD:
 			default:
 				break;
 		};
-
+switch_command_exit:
 		// If the state is not among those handled, break out of the while loop:
 		if (handled_states.find(new_state) == handled_states.end()) {
 			break;
@@ -434,11 +569,46 @@ CameraState JaiGenicamCameraControl::running_handler(CameraState prev_state)
 				retval = this->set_node_to_camera(generic_node);
 				if (retval != 0)
 				{
-					this->set_error_state(CameraState::RUNNING_STATE);
-					new_state = CameraState::FAULT_STATE;
-					std::stringstream err_stream;
-					err_stream << "running_handler: Error set_node_to_camera " << cmd_data.name_string << ", returned " << this->get_error_string(retval) << std::endl;
-//					this->emit_status_message(err_stream.str());
+					GenicamErrorStruct error_data = this->get_error_data();
+					std::cout << "Running_handler: set_node_to_camera returned error " << error_data.error_message << std::endl;
+					switch (retval)
+					{
+					case J_ST_GC_ERROR:
+						
+						if (error_data.error_message.find("Write") != std::string::npos)
+						{
+							std::cout << "Running_handler: skipping write error" << std::endl;
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << error_data.error_message;
+							this->emit_status_message(err_stream.str());
+							break;
+						}
+						else if (error_data.error_message.find("Read") != std::string::npos)
+						{
+							std::cout << "Running_handler: skipping read error" << std::endl;
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << error_data.error_message;
+							this->emit_status_message(err_stream.str());
+							break;
+						}
+						else if (error_data.error_message.find("writable") != std::string::npos)
+						{
+							std::cout << "Running_handler: skipping writable error" << std::endl;
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << error_data.error_message;
+							this->emit_status_message(err_stream.str());
+							break;
+						}
+					default:
+						this->set_error_state(CameraState::RUNNING_STATE);
+						new_state = CameraState::FAULT_STATE;
+						std::stringstream err_stream;
+						err_stream << "running_handler: Error set_node_to_camera " << cmd_data.name_string << ", returned " << this->get_error_string(retval) << std::endl;
+//						this->emit_status_message(err_stream.str());
+					}
 				};
 				break;
 			case CameraCommand::STOP_CAPTURE_CMD:
@@ -447,6 +617,33 @@ CameraState JaiGenicamCameraControl::running_handler(CameraState prev_state)
 				break;
 			case CameraCommand::DISCONNECT_CMD:
 				new_state = CameraState::DISCONNECTED_STATE;
+				break;
+
+			case CameraCommand::RESET_CAMERA_CMD:
+				retval = this->reset_camera();
+				if (retval != 0)
+				{
+					switch (retval)
+					{	
+					case J_ST_GC_ERROR:
+						
+						if (error_data.error_message.find("Write") != std::string::npos)
+						{
+							std::cout << "Idle_handler: reset_camera skipping write error" << std::endl;
+							err_stream.clear();
+							err_stream.str("");
+							err_stream << error_data.error_message;
+							this->emit_status_message(err_stream.str());
+							break;
+						}
+					default:
+						this->set_error_state(CameraState::IDLE_STATE);
+						new_state = CameraState::FAULT_STATE;
+						std::stringstream err_stream;
+						err_stream << "idle_handler: Error, reset_camera " << cmd_data.name_string << ", returned " << this->get_error_string(retval) << std::endl;
+						std::cout << err_stream.str();
+					}
+				}
 				break;
 
 			case CameraCommand::NO_CMD:
@@ -502,7 +699,7 @@ CameraState JaiGenicamCameraControl::fault_handler(CameraState prev_state)
 	std::string			status_string;
 	int retval;
 	int retries = 0;
-	int n_retries = 10;
+	int n_retries = 3;
 	CameraState new_state = CameraState::UNKNOWN_STATE;
 
 	status_stream << "Fault detected" << std::endl;
@@ -590,6 +787,16 @@ CameraState JaiGenicamCameraControl::fault_handler(CameraState prev_state)
 				new_state = prev_state;
 				break;
 			}
+			else if ((error_data.camera_function == "J_Camera_ExecuteCommand") && (error_data.retval == J_STATUS_CODES::J_ST_INVALID_PARAMETER))
+			{
+				std::cout << "J_Camera_ExecuteCommand: Node name not found." << std::endl;
+				std::string node_name = error_data.error_message.substr(0, error_data.error_message.find(" "));
+				status_string = "Node named '" + node_name + "' not found. Check if there is such a node in the camera. If not, rename the device server property and re-initialize device server.";
+				this->set_sticky_status_message(status_string, true);
+				this->emit_status_message(status_stream.str());
+				new_state = prev_state;
+				break;
+			}
 			else if ((error_data.retval == J_STATUS_CODES::J_ST_INVALID_PARAMETER))
 			{
 				std::cout << "Invalid parameter error!" << std::endl;
@@ -602,6 +809,15 @@ CameraState JaiGenicamCameraControl::fault_handler(CameraState prev_state)
 			{
 				std::cout << "GenICam error!" << std::endl;
 				status_string = status_stream.str();
+				this->emit_status_message(status_string);
+
+				std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			}
+			else if ((error_data.retval == J_STATUS_CODES::J_ST_ERROR) && (error_data.error_message.find("buffer") != std::string::npos))
+			{
+				std::cout << "Datastream buffer error!" << std::endl;
+				status_string = status_stream.str() + "Data stream buffer error. You may have to reboot the camera.";				
+				this->set_sticky_status_message(status_string, true);
 				this->emit_status_message(status_string);
 
 				std::this_thread::sleep_for(std::chrono::milliseconds(500));

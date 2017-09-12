@@ -94,10 +94,12 @@ class FrameRateAttrib: public Tango::Attr
 {
 public:
 	FrameRateAttrib():Attr("FrameRate",
-			Tango::DEV_DOUBLE, Tango::READ) {};
+			Tango::DEV_DOUBLE, Tango::READ_WRITE) {};
 	~FrameRateAttrib() {};
 	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
 		{(static_cast<JaiGenicamDS *>(dev))->read_FrameRate(att);}
+	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->write_FrameRate(att);}
 	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
 		{return (static_cast<JaiGenicamDS *>(dev))->is_FrameRate_allowed(ty);}
 };
@@ -218,6 +220,21 @@ public:
 		{(static_cast<JaiGenicamDS *>(dev))->write_PixelFormat(att);}
 	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
 		{return (static_cast<JaiGenicamDS *>(dev))->is_PixelFormat_allowed(ty);}
+};
+
+//	Attribute PacketDelay class definition
+class PacketDelayAttrib: public Tango::Attr
+{
+public:
+	PacketDelayAttrib():Attr("PacketDelay",
+			Tango::DEV_ULONG, Tango::READ_WRITE) {};
+	~PacketDelayAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->read_PacketDelay(att);}
+	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
+		{(static_cast<JaiGenicamDS *>(dev))->write_PacketDelay(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<JaiGenicamDS *>(dev))->is_PacketDelay_allowed(ty);}
 };
 
 //	Attribute Image class definition
@@ -350,6 +367,52 @@ public:
 	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
 	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
 	{return (static_cast<JaiGenicamDS *>(dev))->is_GetCameraList_allowed(any);}
+};
+
+//	Command Reset class definition
+class ResetClass : public Tango::Command
+{
+public:
+	ResetClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
+
+	ResetClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~ResetClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<JaiGenicamDS *>(dev))->is_Reset_allowed(any);}
+};
+
+//	Command GetNodeMap class definition
+class GetNodeMapClass : public Tango::Command
+{
+public:
+	GetNodeMapClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
+
+	GetNodeMapClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~GetNodeMapClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<JaiGenicamDS *>(dev))->is_GetNodeMap_allowed(any);}
 };
 
 

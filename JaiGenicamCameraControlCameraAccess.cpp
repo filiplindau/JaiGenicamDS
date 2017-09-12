@@ -1,6 +1,7 @@
 #include "JaiGenicamCameraControl.h"
 #include <set>
 #include <stack>
+#include <limits>
 
 using namespace JaiGenicamCameraControl_ns;
 
@@ -146,33 +147,47 @@ int JaiGenicamCameraControl::close_camera()
 	std::cout << "JaiGenicamCameraControl close camera" << std::endl;
 	J_STATUS_TYPE   retval;
 	std::stringstream err_msg;
-	std::unique_lock<std::mutex> lock(this->camera_mutex);
-	if (this->camera_handle != NULL)
+	if (USE_STREAMTHREAD == 1)
 	{
-		// Stop acquisition of started
-		if (this->capture_thread_handle != NULL)
+		retval = this->stop_datastream();
+		if (retval != 0)
 		{
-			lock.unlock();
-			retval = this->stop_camera_acquisition();
-			if (retval != 0)
-			{
-				return retval;
-			};
-			lock.lock();
-		};
-		retval = J_Camera_Close(this->camera_handle);
-		if (retval != J_ST_SUCCESS)
-		{
-			err_msg << "Could not close camera!" << this->get_error_string(retval);
+			err_msg << "Could not stop datastream! " << this->get_error_string(retval);
 			std::cout << err_msg.str() << std::endl;
-			this->set_error_data("close_camera", "J_Camera_Close", err_msg.str(), retval, CameraState::NO_STATE, false);
+			this->set_error_data("stop_camera_acquisition", "stop_datastream", err_msg.str(), retval, CameraState::NO_STATE, false);
 			return retval;
 		}
-		else
+	}
+	else
+	{
+		std::unique_lock<std::mutex> lock(this->camera_mutex);
+		if (this->camera_handle != NULL)
 		{
-			std::cout << "Camera closed." << std::endl;
-			this->camera_handle = NULL;
-		}			
+			// Stop acquisition of started
+			if (this->capture_thread_handle != NULL)
+			{
+				lock.unlock();
+				retval = this->stop_camera_acquisition();
+				if (retval != 0)
+				{
+					return retval;
+				};
+				lock.lock();
+			};
+			retval = J_Camera_Close(this->camera_handle);
+			if (retval != J_ST_SUCCESS)
+			{
+				err_msg << "Could not close camera!" << this->get_error_string(retval);
+				std::cout << err_msg.str() << std::endl;
+				this->set_error_data("close_camera", "J_Camera_Close", err_msg.str(), retval, CameraState::NO_STATE, false);
+				return retval;
+			}
+			else
+			{
+				std::cout << "Camera closed." << std::endl;
+				this->camera_handle = NULL;
+			}			
+		}
 	}
 	return 0;
 }; // JaiGenicamCameraControl::close_camera
@@ -566,16 +581,21 @@ int JaiGenicamCameraControl::populate_node_map()
 				return retval;
 			}
 			// std::cout << "Subfeature " << index_f << " type " << node_type << std::endl;
+
+			// Check if node is a category node or a feature node
 			if (node_type == J_NODE_TYPE::J_ICategory)
 			{
+				// It was category, so push this onto the stack for later processing
 				node_category_stack.push(subfeature_name_string);
 			}
 			else
 			{
+				// It was feature, so generate a new node in the map.
 				lock.unlock();
 				retval = this->generate_genericnode_from_name(subfeature_name_string, sub_node);
 				lock.lock();
 				this->node_map.insert(std::make_pair(subfeature_name_string, sub_node));
+//				std::cout << "populate_node_map: inserting node " << subfeature_name_string << std::endl;
 			}
 			// Check if the node is the exposuretime node
 			// Then save that name. We will use it late to check if the camera is alive.
@@ -614,9 +634,51 @@ int JaiGenicamCameraControl::populate_node_map()
 }; // JaiGenicamCameraControl::populate_node_map
 
 
+int JaiGenicamCameraControl::update_nodemap_nodeinfo(std::string node_name)
+{
+	bool debug_flag = false;
+	int retval;
+	GenicamGenericNode generic_node;
+	if (debug_flag) { std::cout << "update_nodemap_nodeinfo: entering..." << std::endl;}
+	// First the node to the same value 
+	{
+		std::lock_guard<std::mutex> lock(this->node_mutex);
+		try
+		{
+			generic_node = this->node_map.at(node_name) ;
+		}
+		catch (const std::out_of_range& oor)
+		{
+			return -1;
+		};
+		
+	}
+	retval = this->set_node_to_camera(generic_node);
+	if (retval != 0)
+	{
+		if (debug_flag) { std::cout << "update_nodemap_nodeinfo: set_node_to_camera returned " << this->get_error_string(retval) << std::endl;}
+		return retval;
+	}
+	// Then update the node in the node map
+	retval = this->generate_genericnode_from_name(node_name, generic_node);
+	if (retval != 0)
+	{
+		if (debug_flag) { std::cout << "update_nodemap_nodeinfo: generate_genericnode_from_name returned " << this->get_error_string(retval) << std::endl;}
+		return retval;
+	}
+	{
+		std::lock_guard<std::mutex> lock(this->node_mutex);
+		this->node_map.at(node_name) = generic_node;		
+	}
+	if (debug_flag) { std::cout << "update_nodemap_nodeinfo: emitting signal" << std::endl;}
+	this->update_node_signal.emit(generic_node);
+	return 0;
+} // JaiGenicamCameraControl::update_nodemap_nodeinfo
+
+
 int JaiGenicamCameraControl::generate_genericnode_from_name(std::string node_name, GenicamGenericNode &generic_node)
 {
-		
+	bool				debug_flag = false;
 	J_NODE_TYPE			node_type;
 	J_STATUS_TYPE		retval;
 	std::stringstream	err_msg;
@@ -627,9 +689,23 @@ int JaiGenicamCameraControl::generate_genericnode_from_name(std::string node_nam
 	char				char_buffer_p[512];
 	uint32_t			char_buffer_size;
 	NODE_HANDLE			h_node;
+	NODE_HANDLE			h_node2;
 
 //	GenicamGenericNode generic_node;
 	generic_node.name = node_name;
+	generic_node.unit = "";
+	generic_node.value_i = 0;
+	generic_node.value_d = 0;
+	generic_node.value_s = "";
+	generic_node.description = "";
+	generic_node.type = J_INode;
+	generic_node.enum_entry_map.clear();
+	generic_node.enum_names.clear();
+	generic_node.enum_value_map.clear();
+	generic_node.max_value_d = (std::numeric_limits<double>::max)();
+	generic_node.min_value_d = (std::numeric_limits<double>::min)();
+	generic_node.max_value_i = (std::numeric_limits<int64_t>::max)();
+	generic_node.min_value_i = (std::numeric_limits<int64_t>::min)();
 
 	std::lock_guard<std::mutex> lock(this->camera_mutex);
 	retval = J_Camera_GetNodeByName(this->camera_handle, (int8_t*)node_name.c_str(), &h_node);
@@ -642,11 +718,12 @@ int JaiGenicamCameraControl::generate_genericnode_from_name(std::string node_nam
 		this->set_error_data("generate_genericnode_from_name", "J_Camera_GetNodeByName", err_msg.str(), retval, CameraState::NO_STATE, false);
 		return retval;
 	}
-		
+	
 	char_buffer_size = 512;
 	retval = J_Node_GetDescription(h_node, (int8_t*)char_buffer_p, &char_buffer_size);
 	if (retval == J_ST_SUCCESS)
 	{
+		if (debug_flag) {std::cout << "Description: " << std::string(char_buffer_p, char_buffer_size-1) << std::endl;}
 		generic_node.description = std::string(char_buffer_p, char_buffer_size-1);	// Size - 1 to remove trailing null termination
 	}
 	else
@@ -714,7 +791,6 @@ int JaiGenicamCameraControl::generate_genericnode_from_name(std::string node_nam
 		case J_IIntReg:
 		{
 			// It was an integer value
-//				std::cout << "Node type integer" << std::endl;
 			generic_node.valid = true;
 			generic_node.type = J_NODE_TYPE::J_IInteger;
 			// Get actual value:
@@ -729,7 +805,7 @@ int JaiGenicamCameraControl::generate_genericnode_from_name(std::string node_nam
 					J_Factory_GetGenICamErrorInfo(&gc);
 					err_msg = std::stringstream();
 					err_msg << gc.sNodeName << " GC Error: Failure getting node int value, returned " << gc.sDescription;
-//					std::cout << err_msg.str() << std::endl;
+					std::cout << err_msg.str() << std::endl;
 					generic_node.valid = false;
 					this->set_error_data("generate_genericnode_from_name", "J_Node_GetValueInt64", err_msg.str(), retval, CameraState::NO_STATE, false);
 					break;
@@ -743,9 +819,11 @@ int JaiGenicamCameraControl::generate_genericnode_from_name(std::string node_nam
 					generic_node.valid = false;
 					this->set_error_data("generate_genericnode_from_name", "J_Node_GetValueInt64", err_msg.str(), retval, CameraState::NO_STATE, false);
 				}
-			}			
+			}		
+
+			if (debug_flag) {std::cout << "value_i: " << int_value << std::endl;}
 			generic_node.value_i = int_value;
-//				std::cout << "Current value: " << int_value << std::endl;
+
 			// Get min value:
 			retval = J_Node_GetMinInt64(h_node, &int_value);
 			if (retval != J_ST_SUCCESS)
@@ -757,24 +835,28 @@ int JaiGenicamCameraControl::generate_genericnode_from_name(std::string node_nam
 					J_Factory_GetGenICamErrorInfo(&gc);
 					err_msg = std::stringstream();
 					err_msg << gc.sNodeName << " GC Error: Failure getting node int min value, returned " << gc.sDescription;
-//					std::cout << err_msg.str() << std::endl;
-					generic_node.valid = false;
 					this->set_error_data("generate_genericnode_from_name", "J_Node_GetMinInt64", err_msg.str(), retval, CameraState::NO_STATE, false);
 					break;
 				case J_ST_INVALID_PARAMETER:
-					generic_node.valid = false;
 					break;
 				default:
 					err_msg = std::stringstream();
 					err_msg << node_name << " failure getting int min value, returned " << this->get_error_string(retval) ;
 					std::cout << err_msg.str() << std::endl;
-					generic_node.valid = false;
 					this->set_error_data("generate_genericnode_from_name", "J_Node_GetMinInt64", err_msg.str(), retval, CameraState::NO_STATE, false);
 				}
+				generic_node.min_value_i = (std::numeric_limits<int64_t>::min)();
 			}
-			
-			generic_node.min_value_i = int_value;
+			else
+			{
+				if (debug_flag) {std::cout << "min_value_i: " << int_value << std::endl;}
+				generic_node.min_value_i = int_value;
+			}
+
 			// Get max value:
+			std::string max_nodename = node_name + "Max";
+			if (debug_flag) {std::cout << max_nodename << std::endl;}
+
 			retval = J_Node_GetMaxInt64(h_node, &int_value);
 			if (retval != J_ST_SUCCESS)
 			{
@@ -785,22 +867,23 @@ int JaiGenicamCameraControl::generate_genericnode_from_name(std::string node_nam
 					J_Factory_GetGenICamErrorInfo(&gc);
 					err_msg = std::stringstream();
 					err_msg << gc.sNodeName << " GC Error: Failure getting node int max value, returned " << gc.sDescription;
-//					std::cout << err_msg.str() << std::endl;
-					generic_node.valid = false;
 					this->set_error_data("generate_genericnode_from_name", "J_Node_GetMaxInt64", err_msg.str(), retval, CameraState::NO_STATE, false);
 					break;
 				case J_ST_INVALID_PARAMETER:
-					generic_node.valid = false;
 					break;
 				default:
 					err_msg = std::stringstream();
 					err_msg << node_name << " failure getting int max value, returned " << this->get_error_string(retval) ;
 					std::cout << err_msg.str() << std::endl;
-					generic_node.valid = false;
 					this->set_error_data("generate_genericnode_from_name", "J_Node_GetMaxInt64", err_msg.str(), retval, CameraState::NO_STATE, false);
 				}
+				generic_node.max_value_i = (std::numeric_limits<int64_t>::max)();
 			}
-			generic_node.max_value_i = int_value;
+			else
+			{
+				if (debug_flag) {std::cout << "max_value_i: " << int_value << std::endl;}
+				generic_node.max_value_i = int_value;
+			}
 			
 			break;
 		}
@@ -854,22 +937,26 @@ int JaiGenicamCameraControl::generate_genericnode_from_name(std::string node_nam
 					J_Factory_GetGenICamErrorInfo(&gc);
 					err_msg << gc.sNodeName << " double min value, returned " << gc.sDescription;
 					std::cout << err_msg.str() << std::endl;
-					generic_node.valid = false;
+//					generic_node.valid = false;
 					this->set_error_data("generate_genericnode_from_name", "J_Node_GetMinDouble", err_msg.str(), retval, CameraState::NO_STATE, false);
 					break;
 				case J_ST_INVALID_PARAMETER:
-					generic_node.valid = false;
+//					generic_node.valid = false;
 					break;
 				default:
 					err_msg = std::stringstream();
 					err_msg << node_name << " failure getting double min value, returned " << this->get_error_string(retval) ;
 					std::cout << err_msg.str() << std::endl;
-					generic_node.valid = false;
+//					generic_node.valid = false;
 					this->set_error_data("generate_genericnode_from_name", "J_Node_GetMinDouble", err_msg.str(), retval, CameraState::NO_STATE, false);
 				}
+				generic_node.min_value_d = (std::numeric_limits<double>::min)();
 			}
-			
-			generic_node.min_value_d = double_value;
+			else
+			{
+				generic_node.min_value_d = double_value;
+			}
+
 			// Get max value:
 			retval = J_Node_GetMaxDouble(h_node, &double_value);
 			
@@ -884,21 +971,25 @@ int JaiGenicamCameraControl::generate_genericnode_from_name(std::string node_nam
 					J_Factory_GetGenICamErrorInfo(&gc);
 					err_msg << gc.sNodeName << " double max value, returned " << gc.sDescription;
 					std::cout << err_msg.str() << std::endl;
-					generic_node.valid = false;
+//					generic_node.valid = false;
 					this->set_error_data("generate_genericnode_from_name", "J_Node_GetMaxDouble", err_msg.str(), retval, CameraState::NO_STATE, false);
 					break;
 				case J_ST_INVALID_PARAMETER:
-					generic_node.valid = false;
+//					generic_node.valid = false;
 					break;
 				default:
 					err_msg = std::stringstream();
 					err_msg << node_name << " failure getting double max value, returned " << this->get_error_string(retval) ;
 					std::cout << err_msg.str() << std::endl;
-					generic_node.valid = false;
+//					generic_node.valid = false;
 					this->set_error_data("generate_genericnode_from_name", "J_Node_GetMaxDouble", err_msg.str(), retval, CameraState::NO_STATE, false);
 				}
+				generic_node.max_value_d = (std::numeric_limits<double>::max)();
 			}
-			generic_node.max_value_d = double_value;			
+			else
+			{
+				generic_node.max_value_d = double_value;
+			}
 			
 			break;
 		}
@@ -1241,11 +1332,27 @@ int JaiGenicamCameraControl::disable_auto_nodes()
 						retval = J_Node_SetValueInt64(h_node, true, int_value);
 						if (retval != J_ST_SUCCESS)
 						{ 
-							err_msg <<  "Failure turning off node " << node_name << ", returned " << this->get_error_string(retval) ;
-							if (debug_output){
-								std::cout << err_msg.str() << std::endl; }
-							this->set_error_data("disable_auto_nodes", "J_Node_SetValueInt64", err_msg.str(), retval, CameraState::NO_STATE, false);
-							return retval;
+							switch (retval)
+							{
+							case J_ST_GC_ERROR:
+								tGenICamErrorInfo gc;
+								J_Factory_GetGenICamErrorInfo(&gc);
+								err_msg << gc.sNodeName << " GC Error: Failure turning off node " << node_name << ", returned " << gc.sDescription;
+								if (debug_output == true)
+								{
+									std::cout << err_msg.str() << std::endl;
+								}
+								this->set_error_data("disable_auto_nodes", "J_Node_SetValueInt64", err_msg.str(), retval, CameraState::NO_STATE, false);
+								break;
+
+							default:
+								err_msg << "Failure turning off node " << node_name << ", returned " << this->get_error_string(retval) ;
+								if (debug_output == true)
+								{
+									std::cout << err_msg.str() << std::endl;
+								}
+								this->set_error_data("disable_auto_nodes", "J_Node_SetValueInt64", err_msg.str(), retval, CameraState::NO_STATE, false);
+							}
 						}
 					}
 				}
@@ -1253,7 +1360,7 @@ int JaiGenicamCameraControl::disable_auto_nodes()
 		}
 	}
 
-	return 0;
+	return retval;
 }; // JaiGenicamCameraControl::disable_auto_nodes
 
 
@@ -1270,94 +1377,128 @@ int JaiGenicamCameraControl::start_camera_acquisition()
 	J_STATUS_TYPE   retval;
 	std::stringstream err_msg;
 
-	// Close old stream if active
-	if(this->capture_thread_handle != NULL)
-	{				
-		retval = this->stop_camera_acquisition();
+	if (USE_STREAMTHREAD == 1)
+	{
+		// Make sure the camera is open
+		if (this->camera_handle == NULL)
+		{
+			retval = this->open_camera();
+			if (retval != 0)
+			{
+				std::cout << "start_camera_acquisition: Error opening camera. " << this->get_error_string(retval) << std::endl;
+				return retval;
+			};
+		};	
+
+		retval = this->start_datastream();
 		if (retval != 0)
 		{
-			std::cout << "start_camera_acquisition: Error stopping aquisition. " << this->get_error_string(retval) << std::endl;			
+			std::cout << "start_datasteam: Error. " << this->get_error_string(retval) << std::endl;
 			return retval;
 		};
-	};
-	// Make sure the camera is open
-	if (this->camera_handle == NULL)
-	{
-		retval = this->open_camera();
-		if (retval != 0)
-		{
-			std::cout << "start_camera_acquisition: Error opening camera. " << this->get_error_string(retval) << std::endl;
-			return retval;
-		};
-	};
-
-	std::unique_lock<std::mutex> lock(this->camera_mutex);	
-
-	
-	// Get the pixelformat from the camera
-	uint64_t jaiPixelFormat = 0;
-	int64_t remote_pixelformat;
-	retval = this->get_node_value("PixelFormat", remote_pixelformat);
-
-	retval = J_Image_Get_PixelFormat(this->camera_handle, remote_pixelformat, &jaiPixelFormat);
-	if (retval != J_ST_SUCCESS) {
-		err_msg << "Could not get pixelformat! " << this->get_error_string(retval);
-		std::cout << err_msg.str() << std::endl;
-		this->set_error_data("start_camera_acquisition", "J_Image_Get_PixelFormat", err_msg.str(), retval, CameraState::NO_STATE, false);
-		return retval;
-	};
-
-	// Calculate number of bits (not bytes) per pixel using macro
-	int bpp = J_BitsPerPixel(jaiPixelFormat);
-	int64_t image_width;
-	int64_t image_height;
-	retval = this->get_node_value("Width", image_width);
-	if (retval != J_ST_SUCCESS) {
-		err_msg << "Could not get image width! " << this->get_error_string(retval);
-		std::cout << err_msg.str() << std::endl;
-		return retval;
-	};
-	retval = this->get_node_value("Height", image_height);
-	if (retval != J_ST_SUCCESS) {
-		err_msg << "Could not get image height! " << this->get_error_string(retval);
-		std::cout << err_msg.str() << std::endl;
-		return retval;
-	};
-
-	std::cout << "Image parameters: " << std::endl << "  height..." << image_height << std::endl << "   width..." << image_width
-		<< std::endl << "     bpp..." << bpp << std::endl << "    size..." << (image_height*image_width*bpp)/8 << std::endl;
-
-	int8_t          transportlayer_s[J_FACTORY_INFO_SIZE];
-	uint32_t        size;
-	size = J_FACTORY_INFO_SIZE;
-	retval = J_Camera_GetTransportLayerName(this->camera_handle, transportlayer_s, &size);
-	std::cout << "J_Camera_GetTransportLayerName: retval " << this->get_error_string(retval) << ", string " << transportlayer_s << std::endl;
-
-	// Open stream
-	retval = J_Image_OpenStream(this->camera_handle, 0, 
-		reinterpret_cast<J_IMG_CALLBACK_OBJECT>(this), 
-		reinterpret_cast<J_IMG_CALLBACK_FUNCTION>(&JaiGenicamCameraControl::capture_stream_callback), 
-		&this->capture_thread_handle, (image_height*image_width*bpp)/8);
-	if (retval != J_ST_SUCCESS) {
-		err_msg << "Could not open stream! " << this->get_error_string(retval);
-		std::cout << err_msg.str() << std::endl;
-		this->set_error_data("start_camera_acquisition", "J_Image_OpenStream", err_msg.str(), retval, CameraState::NO_STATE, false);
-		return retval;
-	};
-	std::cout << "Stream open " << std::endl;
-
-	// Start Acquisition
-	retval = J_Camera_ExecuteCommand(this->camera_handle, NODE_NAME_ACQSTART);
-	if (retval != J_ST_SUCCESS)
-	{
-		err_msg << "Could not start aquisition! " << this->get_error_string(retval);
-		std::cout << err_msg.str() << std::endl;
-		this->set_error_data("start_camera_acquisition", "J_Camera_ExecuteCommand", err_msg.str(), retval, CameraState::NO_STATE, false);
-		return retval;
 	}
-	std::cout << "Acquisition started" << std::endl;
-	lock.unlock();
-		
+	else
+	{
+		// Close old stream if active
+		if(this->capture_thread_handle != NULL)
+		{				
+			retval = this->stop_camera_acquisition();
+			if (retval != 0)
+			{
+				std::cout << "start_camera_acquisition: Error stopping aquisition. " << this->get_error_string(retval) << std::endl;			
+				return retval;
+			};
+		};
+		// Make sure the camera is open
+		if (this->camera_handle == NULL)
+		{
+			retval = this->open_camera();
+			if (retval != 0)
+			{
+				std::cout << "start_camera_acquisition: Error opening camera. " << this->get_error_string(retval) << std::endl;
+				return retval;
+			};
+		};	
+
+		std::unique_lock<std::mutex> lock(this->camera_mutex);	
+	
+		// Get the pixelformat from the camera
+		uint64_t jaiPixelFormat = 0;
+		int64_t remote_pixelformat;
+		retval = this->get_node_value("PixelFormat", remote_pixelformat);
+
+		retval = J_Image_Get_PixelFormat(this->camera_handle, remote_pixelformat, &jaiPixelFormat);
+		if (retval != J_ST_SUCCESS) {
+			err_msg << "Could not get pixelformat! " << this->get_error_string(retval);
+			std::cout << err_msg.str() << std::endl;
+			this->set_error_data("start_camera_acquisition", "J_Image_Get_PixelFormat", err_msg.str(), retval, CameraState::NO_STATE, false);
+			return retval;
+		};
+
+		// Calculate number of bits (not bytes) per pixel using macro
+		int bpp = J_BitsPerPixel(jaiPixelFormat);
+		int64_t image_width;
+		int64_t image_height;
+		retval = this->get_node_value("Width", image_width);
+		if (retval != J_ST_SUCCESS) {
+			err_msg << "Could not get image width! " << this->get_error_string(retval);
+			std::cout << err_msg.str() << std::endl;
+			return retval;
+		};
+		retval = this->get_node_value("Height", image_height);
+		if (retval != J_ST_SUCCESS) {
+			err_msg << "Could not get image height! " << this->get_error_string(retval);
+			std::cout << err_msg.str() << std::endl;
+			return retval;
+		};
+
+		std::cout << "Image parameters: " << std::endl << "  height..." << image_height << std::endl << "   width..." << image_width
+			<< std::endl << "     bpp..." << bpp << std::endl << "    size..." << (image_height*image_width*bpp)/8 << std::endl;
+
+		int8_t          transportlayer_s[J_FACTORY_INFO_SIZE];
+		uint32_t        size;
+		size = J_FACTORY_INFO_SIZE;
+		retval = J_Camera_GetTransportLayerName(this->camera_handle, transportlayer_s, &size);
+		std::cout << "J_Camera_GetTransportLayerName: retval " << this->get_error_string(retval) << ", string " << transportlayer_s << std::endl;
+
+		//Make sure streaming is supported!
+		uint32_t num_streams = 0;
+		retval = J_Camera_GetNumOfDataStreams(this->camera_handle, &num_streams);
+		if (retval != J_ST_SUCCESS)
+		{
+			err_msg << "Could not get number of data streams! " << this->get_error_string(retval);
+			std::cout << err_msg.str() << std::endl;
+		}
+		else
+		{
+			std::cout << num_streams << " data streams available." << std::endl;
+		}
+	
+		// Open stream
+		retval = J_Image_OpenStream(this->camera_handle, 0, 
+			reinterpret_cast<J_IMG_CALLBACK_OBJECT>(this), 
+			reinterpret_cast<J_IMG_CALLBACK_FUNCTION>(&JaiGenicamCameraControl::capture_stream_callback), 
+			&this->capture_thread_handle, (image_height*image_width*bpp)/8);
+		if (retval != J_ST_SUCCESS) {
+			err_msg << "Could not open stream! " << this->get_error_string(retval);
+			std::cout << err_msg.str() << std::endl;
+			this->set_error_data("start_camera_acquisition", "J_Image_OpenStream", err_msg.str(), retval, CameraState::NO_STATE, false);
+			return retval;
+		};
+		std::cout << "Stream open " << std::endl;
+
+		// Start Acquisition
+		retval = J_Camera_ExecuteCommand(this->camera_handle, NODE_NAME_ACQSTART);
+		if (retval != J_ST_SUCCESS)
+		{
+			err_msg << "Could not start aquisition! " << this->get_error_string(retval);
+			std::cout << err_msg.str() << std::endl;
+			this->set_error_data("start_camera_acquisition", "J_Camera_ExecuteCommand", err_msg.str(), retval, CameraState::NO_STATE, false);
+			return retval;
+		}
+		std::cout << "Acquisition started" << std::endl;
+		lock.unlock();
+	}
 	return 0;
 }; // JaiGenicamCameraControl::start_camera_acquisition
 
@@ -1376,92 +1517,233 @@ int JaiGenicamCameraControl::stop_camera_acquisition()
 	J_NODE_ACCESSMODE access_mode;
 	NODE_HANDLE node_handle;
 
-	// Lock the mutex to keep start_capture to execute while we are still stopping
-	std::unique_lock<std::mutex> lock(this->camera_mutex);	
-	// Stop Acquisition
-	if (this->camera_handle != NULL) 
+	if (USE_STREAMTHREAD == 1)
 	{
-		retval = J_Camera_GetNodeByName(this->camera_handle, NODE_NAME_ACQSTOP, &node_handle);
-		if (retval != J_ST_SUCCESS)
+		retval = this->stop_datastream();
+		if (retval != 0)
 		{
-			std::cout << "Acq stop get node handle fail " << this->get_error_string(retval) << std::endl;
-		}
-		retval = J_Node_GetAccessMode(node_handle, &access_mode);						
-		if (retval != J_ST_SUCCESS)
-		{
-			std::cout << "Acq stop access mode fail " << this->get_error_string(retval) << std::endl;
-		}
-		else
-		{
-			switch (access_mode)
-			{
-			case J_NODE_ACCESSMODE::NA:
-				std::cout << "Acq stop access NA (" << access_mode << ")" << std::endl;
-				break;
-			case J_NODE_ACCESSMODE::NI:
-				std::cout << "Acq stop access NI (" << access_mode << ")" << std::endl;
-				break;
-			case J_NODE_ACCESSMODE::RO:
-				std::cout << "Acq stop access RO (" << access_mode << ")" << std::endl;
-				break;
-			case J_NODE_ACCESSMODE::RW:
-				std::cout << "Acq stop access RW (" << access_mode << ")" << std::endl;
-				break;
-			case J_NODE_ACCESSMODE::WO:
-				std::cout << "Acq stop access WO (" << access_mode << ")" << std::endl;
-				break;
-			default:
-				std::cout << "Acq stop access undefined (" << access_mode << ")" << std::endl;
-				break;
-			}
-		}
-
-		if ((access_mode == J_NODE_ACCESSMODE::RW) || (access_mode == J_NODE_ACCESSMODE::WO))
-		{
-			retval = J_Camera_ExecuteCommand(this->camera_handle, NODE_NAME_ACQSTOP);
-			if (retval != J_ST_SUCCESS)
-			{
-				switch (retval)
-				{
-				case J_ST_GC_ERROR:
-					tGenICamErrorInfo gc;
-					J_Factory_GetGenICamErrorInfo(&gc);
-					err_msg << gc.sNodeName << " GC Error: Failure stopping acquisition, returned " << gc.sDescription;
-					break;
-				default:
-					err_msg << "Could not Stop Acquisition! " << this->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();			
-				}
-				std::cout << err_msg.str() << std::endl;
-				this->set_error_data("stop_camera_acquisition", "J_Camera_ExecuteCommand", err_msg.str(), retval, CameraState::NO_STATE, false);
-				return retval;
-			};
-		}
-		else
-		{
-			std::cout << "Access mode not writable." << std::endl;
-		};
-		std::cout << "JaiGenicamCameraControl::stop_camera_acquisition: Acquisition stopped..." << std::endl;
-	};
-
-	if(this->capture_thread_handle != NULL)
-	{
-		lock.unlock();
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-		lock.lock();
-
-		// Close stream
-		retval = J_Image_CloseStream(this->capture_thread_handle);
-		if (retval != J_ST_SUCCESS)
-		{
-			err_msg << "Could not close Stream!! " << this->get_error_string(retval) << std::endl;
-			std::cout << err_msg.str();
-			this->set_error_data("stop_camera_acquisition", "J_Image_CloseStream", err_msg.str(), retval, CameraState::NO_STATE, false);
+			err_msg << "Could not stop datastream! " << this->get_error_string(retval);
+			std::cout << err_msg.str() << std::endl;
+			this->set_error_data("stop_camera_acquisition", "stop_datastream", err_msg.str(), retval, CameraState::NO_STATE, false);
 			return retval;
 		}
-		this->capture_thread_handle = NULL;
-		std::cout << "JaiGenicamCameraControl::stop_camera_acquisition: Stream closed. Success." << std::endl;
 	}
-	lock.unlock();
+	else
+	{
+		// Lock the mutex to keep start_capture from executing while we are still stopping
+		std::unique_lock<std::mutex> lock(this->camera_mutex);	
+		// Stop Acquisition
+		if (this->camera_handle != NULL) 
+		{
+			retval = J_Camera_GetNodeByName(this->camera_handle, NODE_NAME_ACQSTOP, &node_handle);
+			if (retval != J_ST_SUCCESS)
+			{
+				std::cout << "Acq stop get node handle fail " << this->get_error_string(retval) << std::endl;
+			}
+			retval = J_Node_GetAccessMode(node_handle, &access_mode);						
+			if (retval != J_ST_SUCCESS)
+			{
+				std::cout << "Acq stop access mode fail " << this->get_error_string(retval) << std::endl;
+			}
+			else
+			{
+				switch (access_mode)
+				{
+				case J_NODE_ACCESSMODE::NA:
+					std::cout << "Acq stop access NA (" << access_mode << ")" << std::endl;
+					break;
+				case J_NODE_ACCESSMODE::NI:
+					std::cout << "Acq stop access NI (" << access_mode << ")" << std::endl;
+					break;
+				case J_NODE_ACCESSMODE::RO:
+					std::cout << "Acq stop access RO (" << access_mode << ")" << std::endl;
+					break;
+				case J_NODE_ACCESSMODE::RW:
+					std::cout << "Acq stop access RW (" << access_mode << ")" << std::endl;
+					break;
+				case J_NODE_ACCESSMODE::WO:
+					std::cout << "Acq stop access WO (" << access_mode << ")" << std::endl;
+					break;
+				default:
+					std::cout << "Acq stop access undefined (" << access_mode << ")" << std::endl;
+					break;
+				}
+			}
+
+			if ((access_mode == J_NODE_ACCESSMODE::RW) || (access_mode == J_NODE_ACCESSMODE::WO))
+			{
+				retval = J_Camera_ExecuteCommand(this->camera_handle, NODE_NAME_ACQSTOP);
+				if (retval != J_ST_SUCCESS)
+				{
+					switch (retval)
+					{
+					case J_ST_GC_ERROR:
+						tGenICamErrorInfo gc;
+						J_Factory_GetGenICamErrorInfo(&gc);
+						err_msg << gc.sNodeName << " GC Error: Failure stopping acquisition, returned " << gc.sDescription;
+						break;
+					default:
+						err_msg << "Could not Stop Acquisition! " << this->get_error_string(retval) << std::endl;
+						std::cout << err_msg.str();			
+					}
+					std::cout << err_msg.str() << std::endl;
+					this->set_error_data("stop_camera_acquisition", "J_Camera_ExecuteCommand", err_msg.str(), retval, CameraState::NO_STATE, false);
+					return retval;
+				};
+			}
+			else
+			{
+				std::cout << "Access mode not writable." << std::endl;
+			};
+			std::cout << "JaiGenicamCameraControl::stop_camera_acquisition: Acquisition stopped..." << std::endl;
+		};
+
+		if(this->capture_thread_handle != NULL)
+		{
+			lock.unlock();
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			lock.lock();
+
+			// Close stream
+			retval = J_Image_CloseStream(this->capture_thread_handle);
+			if (retval != J_ST_SUCCESS)
+			{
+				err_msg << "Could not close Stream!! " << this->get_error_string(retval) << std::endl;
+				std::cout << err_msg.str();
+				this->set_error_data("stop_camera_acquisition", "J_Image_CloseStream", err_msg.str(), retval, CameraState::NO_STATE, false);
+				return retval;
+			}
+			this->capture_thread_handle = NULL;
+			std::cout << "JaiGenicamCameraControl::stop_camera_acquisition: Stream closed. Success." << std::endl;
+		}
+		lock.unlock();
+	}
 	return 0;
 }; // JaiGenicamCameraControl::stop_camera_acquisition
+
+
+/** ===================================================================
+Reset camera. Also:
+Stop camera acquisition. Close capture stream.
+
+Return 0 if successful, otherwise return the genicam error code.
+*/
+int JaiGenicamCameraControl::reset_camera()
+{
+	std::cout << "JaiGenicamCameraControl::reset_camera: " << std::endl;
+
+	J_STATUS_TYPE retval;
+	std::stringstream err_msg;
+	J_NODE_ACCESSMODE access_mode;
+	NODE_HANDLE node_handle;
+
+	retval = this->stop_camera_acquisition();
+
+	std::lock_guard<std::mutex> lock(this->camera_mutex);	
+	retval = J_Camera_ExecuteCommand(this->camera_handle, NODE_NAME_RESET);
+	if (retval != J_ST_SUCCESS)
+	{
+		switch (retval)
+		{
+		case J_ST_GC_ERROR:
+			tGenICamErrorInfo gc;
+			J_Factory_GetGenICamErrorInfo(&gc);
+			err_msg << "Executing reset command " << gc.sNodeName << " GC Error: Failure resetting camera, returned " << gc.sDescription;
+			break;
+		default:
+			err_msg << "DeviceReset error! " << this->get_error_string(retval) << std::endl;
+			std::cout << err_msg.str();			
+		}
+		std::cout << err_msg.str() << std::endl;
+		this->set_error_data("reset_camera", "J_Camera_ExecuteCommand", err_msg.str(), retval, CameraState::NO_STATE, false);
+		return retval;
+	};
+
+	return 0;
+}; // JaiGenicamCameraControl::reset_camera
+
+
+int JaiGenicamCameraControl::get_node_map_list(std::vector<std::string> &node_map_list)
+{
+	std::cout << "JaiGenicamCameraControl::get_node_map_list: " << std::endl;
+
+	std::stringstream node_stream;
+
+	{
+		std::lock_guard<std::mutex> lock(this->camera_mutex);
+		for (auto const& x : this->node_map)
+		{
+			node_stream.clear();
+			node_stream.str("");
+			node_stream << "NODE: " << x.second.name << std::endl << "VALUE: ";
+			switch (x.second.type)
+			{
+			case J_IInteger:
+			case J_IBoolean:
+				node_stream << x.second.value_i;
+				break;
+			case J_IFloat:
+				node_stream << x.second.value_d;
+				break;
+			case J_IEnumeration:
+				try
+				{
+					node_stream << x.second.enum_value_map.at(x.second.value_i);
+				}
+				catch (const std::out_of_range& oor)
+				{
+					std::cout << "JaiGenicamCameraControl::get_node_map_list: Enum entry " << x.second.value_i << " for node " << x.second.name << " not found in map." << std::endl;
+					node_stream << x.second.value_i;
+				};
+				break;
+			case J_IStringReg:
+				node_stream << x.second.value_s;
+				break;
+			default:
+				node_stream << x.second.value_i;
+				break;
+			}
+			node_stream << " " << x.second.unit << std::endl << "DESCRIPTION: " << x.second.description << std::endl;
+			node_map_list.push_back(node_stream.str());
+		}
+	}
+	std::cout << node_stream.str();
+	
+	/*
+	const int buffer_size = 256 * 1024;
+	HANDLE pipe_handle;
+    char buffer[buffer_size];
+	DWORD nbr_read_bytes;
+	BOOL result;
+	LPTSTR pipe_name = TEXT("\\\\.\\pipe\\pipe");
+
+	J_STATUS_TYPE retval;
+
+    pipe_handle = CreateNamedPipe(pipe_name,
+                            PIPE_ACCESS_DUPLEX | PIPE_TYPE_BYTE | PIPE_READMODE_BYTE,   // FILE_FLAG_FIRST_PIPE_INSTANCE is not needed but forces CreateNamedPipe(..) to fail if the pipe already exists...
+                            PIPE_WAIT,
+                            1,
+                            buffer_size,
+                            buffer_size,
+                            NMPWAIT_USE_DEFAULT_WAIT,
+                            NULL);
+
+	std::lock_guard<std::mutex> lock(this->camera_mutex);
+	retval = J_Camera_SaveSettings(this->camera_handle, pipe_name, SAVE_FORCE_ALL);
+	std::cout << "J_Camera_SaveSettings returned " << retval << std::endl;
+
+	result = ReadFile(
+		pipe_handle,                // handle to pipe 
+		buffer,             // buffer to receive data 
+		sizeof(buffer)-1,     // size of buffer 
+		&nbr_read_bytes,             // number of bytes read 
+		NULL);  
+
+	CloseHandle(pipe_handle);
+	buffer[nbr_read_bytes] = '\0';
+	node_map_xml = buffer;
+	std::cout << "ReadFile result: " << result << std::endl;
+	std::cout << "ReadFile content: " << node_map_xml << std::endl;
+	*/
+	return 0;
+}

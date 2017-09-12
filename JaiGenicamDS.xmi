@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ASCII"?>
 <pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
   <classes name="JaiGenicamDS" pogoRevision="8.1">
-    <description description="Control of Jai Genicam cameras" title="JaiGenicamDS" sourcePath="C:\workspace\JaiGenicamQueueDS" language="Cpp" filestogenerate="XMI   file,Code files" license="GPL" hasMandatoryProperty="true" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
+    <description description="Control of Jai Genicam cameras" title="JaiGenicamDS" sourcePath="C:\workspace\JaiGenicamQueueDS" language="Cpp" filestogenerate="XMI   file,Code files,html Pages" license="GPL" hasMandatoryProperty="true" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false" descriptionHtmlExists="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
       <identification contact="at maxlab.lu.se - filip.lindau" author="filip.lindau" emailDomain="maxlab.lu.se" classFamily="Acquisition" siteSpecific="" platform="Windows" bus="Ethernet" manufacturer="Jai" reference="Genicam cameras"/>
     </description>
@@ -50,6 +50,24 @@
       <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>PixelFormat</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="packetdelay_node_name" description="Name of packet delay node in the camera genicam node tree.&#xA;Normally ``GevSCPD``">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>GevSCPD</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="additional_node_list" description="Add node names in this array for additional nodes to map to attributes.&#xA;Nodes are added in string pairs, the first being the node name and the&#xA;second being the node type (DoubleDynAttr, LongDynAttr, StringDynAttr).&#xA;&#xA;Enumerated type should be specified as StringDynAttr.&#xA;&#xA;Ex.: &#xA;TriggerDelay&#xA;DoubleDynAttr">
+      <type xsi:type="pogoDsl:StringVectorType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <deviceProperties name="framerate_node_name" description="Name of framerate node in the camera genicam node tree.&#xA;Normally ``AcquisitionFrameRate`` or ``AcquisitionFrameRateAbs``">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>AcquisitionFrameRate</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="node_preset_values" description="Add node names in this array for additional nodes that should have preset values.&#xA;Nodes are added in string pairs, the first being the node name and the&#xA;second being the value.&#xA;&#xA;Enumerated node are specified with the enumeration name. &#xA;Boolean nodes are specified with an integer (0=false, 1=true).&#xA;&#xA;Ex.: &#xA;AcquisitionFrameRateEnabled&#xA;1">
+      <type xsi:type="pogoDsl:StringVectorType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
     <commands name="State" description="This command gets the device state (stored in its device_state data member) and returns it to the caller." execMethod="dev_state" displayLevel="OPERATOR" polledPeriod="0">
       <argin description="none">
@@ -118,6 +136,26 @@
       </argout>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </commands>
+    <commands name="Reset" description="Send reset command to camera. There is a chance that &#xA;this clears a hung camera." execMethod="reset" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <excludedStates>UNKNOWN</excludedStates>
+      <excludedStates>OFF</excludedStates>
+    </commands>
+    <commands name="GetNodeMap" description="" execMethod="get_node_map" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:StringArrayType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </commands>
     <attributes name="ExposureTime" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" memorizedAtInit="true" allocReadMember="true" isDynamic="false">
       <dataType xsi:type="pogoDsl:DoubleType"/>
       <changeEvent fire="false" libCheckCriteria="false"/>
@@ -134,7 +172,7 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <properties description="Camera gain value. The unit depends on the specific camera implementation." label="gain" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="0" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
-    <attributes name="FrameRate" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
+    <attributes name="FrameRate" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" memorizedAtInit="true" allocReadMember="true" isDynamic="false">
       <dataType xsi:type="pogoDsl:DoubleType"/>
       <changeEvent fire="false" libCheckCriteria="false"/>
       <archiveEvent fire="false" libCheckCriteria="false"/>
@@ -211,6 +249,14 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <properties description="" label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
       <writeExcludedStates>RUNNING</writeExcludedStates>
+    </attributes>
+    <attributes name="PacketDelay" attType="Scalar" rwType="READ_WRITE" displayLevel="EXPERT" polledPeriod="0" maxX="" maxY="" memorized="true" memorizedAtInit="true" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:UIntType"/>
+      <changeEvent fire="false" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="Controls the delay (in GEV timestamp counter unit) to insert between&#xA;each packet for this stream channel." label="Packet delay" unit="tics" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
     <attributes name="Image" attType="Image" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="4096" maxY="4096" allocReadMember="true" isDynamic="false">
       <dataType xsi:type="pogoDsl:UShortType"/>

@@ -117,6 +117,33 @@ public:
 	//	pixelformat_node_name:	Name of pixelformat node in camera genicam node tree. 
 	//  Normally ``PixelFormat``
 	string	pixelformat_node_name;
+	//	packetdelay_node_name:	Name of packet delay node in the camera genicam node tree.
+	//  Normally ``GevSCPD``
+	string	packetdelay_node_name;
+	//	additional_node_list:	Add node names in this array for additional nodes to map to attributes.
+	//  Nodes are added in string pairs, the first being the node name and the
+	//  second being the node type (DoubleDynAttr, LongDynAttr, StringDynAttr).
+	//  
+	//  Enumerated type should be specified as StringDynAttr.
+	//  
+	//  Ex.: 
+	//  TriggerDelay
+	//  DoubleDynAttr
+	vector<string>	additional_node_list;
+	//	framerate_node_name:	Name of framerate node in the camera genicam node tree.
+	//  Normally ``AcquisitionFrameRate`` or ``AcquisitionFrameRateAbs``
+	string	framerate_node_name;
+	//	node_preset_values:	Add node names in this array for additional nodes that should have preset values.
+	//  Nodes are added in string pairs, the first being the node name and the
+	//  second being the value.
+	//  
+	//  Enumerated node are specified with the enumeration name. 
+	//  Boolean nodes are specified with an integer (0=false, 1=true).
+	//  
+	//  Ex.: 
+	//  AcquisitionFrameRateEnabled
+	//  1
+	vector<string>	node_preset_values;
 
 	bool	mandatoryNotDefined;
 
@@ -133,6 +160,7 @@ public:
 	Tango::DevULong	*attr_ImageOffsetX_read;
 	Tango::DevULong	*attr_ImageOffsetY_read;
 	Tango::DevString	*attr_PixelFormat_read;
+	Tango::DevULong	*attr_PacketDelay_read;
 	Tango::DevUShort	*attr_Image_read;
 
 //	Constructors and destructors
@@ -234,6 +262,7 @@ public:
  *	Attr type:	Scalar
  */
 	virtual void read_FrameRate(Tango::Attribute &attr);
+	virtual void write_FrameRate(Tango::WAttribute &attr);
 	virtual bool is_FrameRate_allowed(Tango::AttReqType type);
 /**
  *	Attribute TriggerSource related methods
@@ -315,6 +344,17 @@ public:
 	virtual void write_PixelFormat(Tango::WAttribute &attr);
 	virtual bool is_PixelFormat_allowed(Tango::AttReqType type);
 /**
+ *	Attribute PacketDelay related methods
+ *	Description: Controls the delay (in GEV timestamp counter unit) to insert between
+ *               each packet for this stream channel.
+ *
+ *	Data type:	Tango::DevULong
+ *	Attr type:	Scalar
+ */
+	virtual void read_PacketDelay(Tango::Attribute &attr);
+	virtual void write_PacketDelay(Tango::WAttribute &attr);
+	virtual bool is_PacketDelay_allowed(Tango::AttReqType type);
+/**
  *	Attribute Image related methods
  *	Description: Latest captured image
  *
@@ -373,6 +413,22 @@ public:
 	 */
 	virtual Tango::DevVarStringArray *get_camera_list();
 	virtual bool is_GetCameraList_allowed(const CORBA::Any &any);
+	/**
+	 *	Command Reset related method
+	 *	Description: Send reset command to camera. There is a chance that 
+	 *               this clears a hung camera.
+	 *
+	 */
+	virtual void reset();
+	virtual bool is_Reset_allowed(const CORBA::Any &any);
+	/**
+	 *	Command GetNodeMap related method
+	 *	Description: 
+	 *
+	 *	@returns 
+	 */
+	virtual Tango::DevVarStringArray *get_node_map();
+	virtual bool is_GetNodeMap_allowed(const CORBA::Any &any);
 
 
 /*----- PROTECTED REGION ID(JaiGenicamDS::Additional Method prototypes) ENABLED START -----*/
@@ -381,11 +437,13 @@ public:
 private:
 	bool attribute_info_init_flag;
 	::JaiGenicamCameraControl_ns::JaiGenicamCameraControl* camera_connection;
-	void update_attribute_info(std::string genicam_name, std::string tango_attribute_name);
+	void update_attribute_info(std::string genicam_name, std::string tango_attribute_name, bool set_memorized);
+	void update_attribute_info(::JaiGenicamCameraControl_ns::GenicamGenericNode generic_node);
 	void update_state(::JaiGenicamCameraControl_ns::CameraState camera_state);
 	void update_status(std::string camera_status);
 	void update_error(::JaiGenicamCameraControl_ns::GenicamErrorStruct error_data);
 	void update_image(int framecounter);
+	void JaiGenicamDS::write_presets();
 
 /*----- PROTECTED REGION END -----*/	//	JaiGenicamDS::Additional Method prototypes
 };
