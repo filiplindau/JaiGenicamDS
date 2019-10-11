@@ -97,6 +97,8 @@ namespace JaiGenicamCameraControl_ns
 	// const char* CameraStateText::enum_text[] = {"UNKNOWN", "DISCONNECTED", "INIT", "IDLE", "RUNNING", "FAULT"};
 	// const char* CameraStateText::enum_text[];
 
+	/** Enum of available commands to send to the control thread.
+	*/
 	enum CameraCommand
 	{
 		INIT_CMD,
@@ -124,6 +126,9 @@ namespace JaiGenicamCameraControl_ns
 		ENUM_INT,
 		ENUM_STRING
 	};
+
+	/** Struct for sending commands to the camera control thread.
+	*/
 	struct CameraCommandData
 	{
 		CameraCommand	command;
@@ -134,6 +139,75 @@ namespace JaiGenicamCameraControl_ns
 		CameraCommandTypeEnum type;
 	};
 
+
+	/** The camera control class.
+
+	This will start a state machine for camera control. Direct camera access is not available from the outside, it is handled in 
+	the state handler methods in its own thread. Communication is sent with a command queue by using public methods. The state handler 
+	is started in the constructor. It takes as an argument the serial number of the camera you wish to connect to.
+	
+	Some care has been taken to make the whole class thread safe. Camera access is protected with the camera_mutex, queue access 
+	has the queue_mutex. There is also an error_mutex for error message handling.
+
+	State changes, status changes, new image ready, error message, node updated, and command return are signalled with Signals
+	(see http://simmesimme.github.io/tutorials/2015/09/20/signal-slot). To receive the updates a client connects to a signal with e.g.
+	my_camera_control.image_ready_signal.connect_member(this, &MyClientClass::update_image);
+
+
+	The state transitions are:
+	--start--
+	UNKNOWN STATE: 
+	Start up the JaiGenicamFactory. Find the desired camera on the bus. 
+	-> UNKNOWN: If the camera is not found
+	-> INIT: Camera found
+	
+	INIT STATE:
+	Open the camera and populate the node map. Disable nodes with the name "auto" in them. They are annoying when controlling the camera.
+	-> FAULT: Error detected
+	-> IDLE: Everythink ok
+
+	IDLE STATE:
+	Stop acquisition thread if running. Go in a loop, checking the command queue for commands.
+	-> FAULT: Error detected
+	-> IDLE: No state transition from command
+	-> RUNNING: START_CAPTURE_CMD
+	-> DISCONNECTED: DISCONNECT_CMD
+	-> INIT: INIT_CMD
+
+	RUNNING STATE:
+	Start acquisition thread if not running. Go in a loop, checking the command queue for commands.
+	-> FAULT: Error detected
+	-> IDLE: STOP_CAPTURE_CMD
+	-> RUNNING: No state transition from command
+	-> DISCONNECTED: DISCONNECT_CMD
+	-> INIT: INIT_CMD
+
+	DISCONNECTED STATE:
+	Stop acquisition thread if running. Disconnect from camera, freeing it for other applications. 
+	Go in a loop, checking the command queue for commands.
+	-> IDLE: CONNECT_CMD
+	-> RUNNING: START_CAPTURE_CMD
+	-> DISCONNECTED: No state transition from command
+	-> INIT: INIT_CMD
+
+	FAULT STATE:
+	An error has occurred. Try to identify the error through the error_data struct. This is done in a long if-else construct.
+	-> Previous state: If the error can be rectified
+	-> UNKNOWN: Default state if the error correction is unsuccessful
+	
+
+	After connecting to the camera a node map is created. It consists of "generic node" structs, which has fields for int, float, and
+	string nodes. Only feature nodes are stored (not subfeatures such as GainMax). This map is then used to retrieve node information quickly.
+	A problem is that sometimes a node is not readable or writeable. These errors are "ignored", i.e. not sent to the fault handler state.
+
+	When starting the image acquisition (RUNNING state), a new thread is started. If the define USE_STREAMTHREAD = 0 the JaiGenicam convenience 
+	functions J_Camera_CreateDatastream etc. are used. This was found to be problematic when running several cameras simultaneously. 
+	So setting USE_STREAMTHREAD = 1 will use the J_Datastream_xxx functions instead with manual buffer management etc. This seems to
+	work better.
+
+	TODO: Sometimes when running several cameras the camera acquisition stalls, getting J_COND_WAIT_TIMEOUT events. It helps to increase 
+	the packetdelay node. Should put in code to restart the acquisition when it stalls.
+	*/
 	class JaiGenicamCameraControl
 	{
 	public:

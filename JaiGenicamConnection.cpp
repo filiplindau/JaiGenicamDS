@@ -16,7 +16,7 @@ namespace JaiGenicamConnection_ns
 	JaiGenicamConnection::JaiGenicamConnection(::JaiGenicamDS_ns::JaiGenicamDS* tango_ds_class, std::string camera_serial)
 	{		
 
-		std::cout << "Creating JaiGenicamConnection object" << std::endl;
+		cout << "Creating JaiGenicamConnection object" << std::endl;
 
 		this->tango_ds_class = tango_ds_class;
 		this->tango_state = tango_ds_class->get_state();
@@ -30,7 +30,7 @@ namespace JaiGenicamConnection_ns
 		this->frame_counter = 0;
 		this->fps_vector.clear();
 		
-		std::cout << "Nodes" << std::endl;
+		cout << "Nodes" << std::endl;
 		GenicamNode<uint64_t> gn = { "GainRaw",	// name
 									 "int",		// type
 									 "",		// unit
@@ -40,19 +40,19 @@ namespace JaiGenicamConnection_ns
 									 0,			// max_value
 									 false };	// valid
 		this->gain_node = gn;
-		std::cout << "Gain node" << std::endl;
+		cout << "Gain node" << std::endl;
 		GenicamNode<double> en = { "ExposureTime", "double", "", "", 0, 0, 0, false };
 		this->exposuretime_node = en;
-		std::cout << "Exposuretime node" << std::endl;
+		cout << "Exposuretime node" << std::endl;
 		GenicamNode<uint64_t> fn = { "JAIAcquisitionFrameRate", "enum", "", "", 0, 0, 0, false };
 		this->framerate_node = fn;
-		std::cout << "Framerate node" << std::endl;
+		cout << "Framerate node" << std::endl;
 		GenicamNode<uint64_t> wn = { "Width", "int", "", "", 0, 0, 0, false };
 		this->imagewidth_node = wn;
-		std::cout << "Width node" << std::endl;
+		cout << "Width node" << std::endl;
 		GenicamNode<uint64_t> hn = { "Height", "int", "", "", 0, 0, 0, false };
 		this->imageheight_node = hn;
-		std::cout << "Height node" << std::endl;
+		cout << "Height node" << std::endl;
 		GenicamNode<uint64_t> pfn = { "PixelFormat",	// name
 									 "enum",		// type
 									 "",		// unit
@@ -68,15 +68,15 @@ namespace JaiGenicamConnection_ns
 		this->error_data.error_message = "";
 		this->error_data.retval = J_ST_SUCCESS;
 
-		std::cout << "State" << std::endl;
+		cout << "State" << std::endl;
 		this->jai_genicam_state = JaiGenicamDisconnectedState::Instance();
-		std::cout << "State instance: " << this->jai_genicam_state << std::endl;
+		cout << "State instance: " << this->jai_genicam_state << std::endl;
 	}
 
 
 	JaiGenicamConnection::~JaiGenicamConnection(void)
 	{
-		std::cout << "JaiGenicamConnection destructor" << std::endl;
+		cout << "JaiGenicamConnection destructor" << std::endl;
 		close_camera();
 		close_factory();
 //		delete this->jai_genicam_state;
@@ -84,9 +84,9 @@ namespace JaiGenicamConnection_ns
 
 	void JaiGenicamConnection::change_state(JaiGenicamState* new_state)
 	{
-		std::cout << "Changing state." << std::endl;
+		cout << "Changing state." << std::endl;
 		this->jai_genicam_state = new_state;
-		std::cout << "New state object." << std::endl;
+		cout << "New state object." << std::endl;
 		this->jai_genicam_state->enter(this);
 	};
 
@@ -117,43 +117,43 @@ namespace JaiGenicamConnection_ns
 
 	void JaiGenicamConnection::close_camera()
 	{
-		std::cout << "GenicamConnection::close_camera" << std::endl;
+		cout << "GenicamConnection::close_camera" << std::endl;
 		this->jai_genicam_state->close_camera(this);
 	};
 
 	void JaiGenicamConnection::close_factory()
 	{
-		std::cout << "GenicamConnection::close_factory" << std::endl;
+		cout << "GenicamConnection::close_factory" << std::endl;
 		this->jai_genicam_state->close_factory(this);
 	};
 
 	int JaiGenicamConnection::get_gain(double* value_p)
 	{
-//		std::cout << "GenicamConnection::get_gain" << std::endl; 
+//		cout << "GenicamConnection::get_gain" << std::endl; 
 		return this->jai_genicam_state->get_gain(this, value_p);
 	};
 
 	int JaiGenicamConnection::get_image(uint32_t* width_p, uint32_t* height_p, uint16_t* image_p)
 	{
-//		std::cout << "GenicamConnection::get_image" << std::endl; 
+//		cout << "GenicamConnection::get_image" << std::endl; 
 		return this->jai_genicam_state->get_image(this, width_p, height_p, image_p);
 	};
 
 	int JaiGenicamConnection::get_image_info(J_tIMAGE_INFO* aq_image_info_p)
 	{
-//		std::cout << "GenicamConnection::get_image_info" << std::endl; 
+//		cout << "GenicamConnection::get_image_info" << std::endl; 
 		return this->jai_genicam_state->get_image_info(this, aq_image_info_p);
 	}
 
 	int JaiGenicamConnection::get_framecounter(int64_t* value_p)
 	{
-//		std::cout << "GenicamConnection::get_framecounter" << std::endl; 
+//		cout << "GenicamConnection::get_framecounter" << std::endl; 
 		return this->jai_genicam_state->get_framecounter(this, value_p);
 	}
 
 	int JaiGenicamConnection::get_framerate(double* value_p)
 	{
-//		std::cout << "GenicamConnection::get_framerate" << std::endl; 
+//		cout << "GenicamConnection::get_framerate" << std::endl; 
 		return this->jai_genicam_state->get_framerate(this, value_p);
 	}
 
@@ -161,38 +161,38 @@ namespace JaiGenicamConnection_ns
 	template<typename T>
 	int JaiGenicamConnection::get_node(GenicamNode<T>* node)
 	{
-//		std::cout << "GenicamConnection::get_node" << std::endl;
+//		cout << "GenicamConnection::get_node" << std::endl;
 		return this->jai_genicam_state->get_node(this, node);
 	}
 	
 	int JaiGenicamConnection::get_node_value(std::string name, double* value_p)
 	{
-//		std::cout << "GenicamConnection::get_node_value" << std::endl;
+//		cout << "GenicamConnection::get_node_value" << std::endl;
 		return this->jai_genicam_state->get_node_value(this, name, value_p);
 	}
 
 	int JaiGenicamConnection::get_node_value(std::string name, int64_t* value_p)
 	{
-//		std::cout << "GenicamConnection::get_node_value" << std::endl;
+//		cout << "GenicamConnection::get_node_value" << std::endl;
 		return this->jai_genicam_state->get_node_value(this, name, value_p);
 	}
 			
 	int JaiGenicamConnection::set_node_value(std::string name, double value)
 	{
-//		std::cout << "GenicamConnection::set_node_value" << std::endl;
+//		cout << "GenicamConnection::set_node_value" << std::endl;
 		return this->jai_genicam_state->set_node_value(this, name, value);
 
 	}
 
 	int JaiGenicamConnection::get_node_type(std::string name, std::string* type)
 	{
-//		std::cout << "GenicamConnection::get_node_type" << std::endl;
+//		cout << "GenicamConnection::get_node_type" << std::endl;
 		return this->jai_genicam_state->get_node_type(this, name, type);
 	}
 
 	int JaiGenicamConnection::get_node_info(std::string name, GenicamGenericNode* generic_node_p)
 	{
-//		std::cout << "GenicamConnection::get_node_info" << std::endl;
+//		cout << "GenicamConnection::get_node_info" << std::endl;
 		return this->jai_genicam_state->get_node_info(this, name, generic_node_p);
 	}
 
@@ -230,7 +230,7 @@ namespace JaiGenicamConnection_ns
 			retval = J_Image_FromRawToImage(aq_imageinfo_p, &this->image_buffer);
 			if (retval != J_ST_SUCCESS)
 			{
-				std::cout <<  "Could not convert to RAW! " << this->get_error_string(retval) << std::endl;
+				cout <<  "Could not convert to RAW! " << this->get_error_string(retval) << std::endl;
 			};
 /*
 			std::copy(aq_imageinfo_p->pImageBuffer, 
@@ -288,7 +288,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamState::enter( JaiGenicamConnection* wrapper )
 	{
-		std::cout << "Entering new state" << std::endl;
+		cout << "Entering new state" << std::endl;
 		return 0;
 	}
 
@@ -302,21 +302,21 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamState::close_camera(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "JaiGenicamState close camera" << std::endl;
+		cout << "JaiGenicamState close camera" << std::endl;
 		J_STATUS_TYPE   retval;
 		if (wrapper->camera_handle != NULL)
 		{
 			retval = J_Camera_Close(wrapper->camera_handle);
 			if (retval != J_ST_SUCCESS)
 			{
-				std::cout <<  "Could not close camera! " << wrapper->get_error_string(retval) << std::endl;
+				cout <<  "Could not close camera! " << wrapper->get_error_string(retval) << std::endl;
 			}
 			else
 			{
-				std::cout << "Camera closed." << std::endl;
+				cout << "Camera closed." << std::endl;
 				wrapper->camera_handle = NULL;
 			}
-			std::cout << "Changing state to disconnected." << std::endl;
+			cout << "Changing state to disconnected." << std::endl;
 			change_state(wrapper, JaiGenicamDisconnectedState::Instance());
 		}
 		return 0;
@@ -324,14 +324,14 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamState::close_factory(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "JaiGenicamState close factory" << std::endl;
+		cout << "JaiGenicamState close factory" << std::endl;
 		return -1;
 	
 	};
 
 	int JaiGenicamState::disconnect(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "Disconnecting." << std::endl;
+		cout << "Disconnecting." << std::endl;
 		this->stop_capture(wrapper);
 		this->close_camera(wrapper);
 		//close_factory(wrapper);
@@ -357,7 +357,7 @@ namespace JaiGenicamConnection_ns
 	int JaiGenicamState::get_gain(JaiGenicamConnection* wrapper, double* value_p)
 	{
 		*value_p = (double)wrapper->gain_node.value;
-		std::cout << "get_gain value: " << *value_p << std::endl;
+		cout << "get_gain value: " << *value_p << std::endl;
 
 		if (wrapper->gain_node.valid == true)
 		{
@@ -388,7 +388,7 @@ namespace JaiGenicamConnection_ns
 				aq_image_info_p->iAwaitDelivery = wrapper->image_buffer.iAwaitDelivery;
 				aq_image_info_p->pImageBuffer = NULL;
 				retval = 0;
-//				std::cout << "Image size: " << aq_image_info_p->iImageSize << std::endl;
+//				cout << "Image size: " << aq_image_info_p->iImageSize << std::endl;
 			};
 
 			lock.unlock();
@@ -432,7 +432,7 @@ namespace JaiGenicamConnection_ns
 	int JaiGenicamState::get_image(JaiGenicamConnection* wrapper, uint32_t* width_p, uint32_t* height_p, uint16_t* image_p)
 	{
 		int retval = -1;
-//		std::cout << "Entering JaiGenicamState::get_image" << std::endl;
+//		cout << "Entering JaiGenicamState::get_image" << std::endl;
 		std::unique_lock<std::mutex> lock(wrapper->camera_mtx);		
 			if (wrapper->image_buffer.pImageBuffer != NULL)
 			{			
@@ -504,7 +504,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamDisconnectedState::enter( JaiGenicamConnection* wrapper )
 	{
-		std::cout << "Entering DISCONNECTED state" << std::endl;
+		cout << "Entering DISCONNECTED state" << std::endl;
 		wrapper->tango_ds_class->set_state(Tango::DevState::UNKNOWN);
 		close_camera(wrapper);		// Make sure camera is closed.
 		return 0;
@@ -520,7 +520,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamDisconnectedState::connect(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "JaiGenicamDisconnectedState::connect" << std::endl;
+		cout << "JaiGenicamDisconnectedState::connect" << std::endl;
 		//wrapper->tango_state = wrapper->tango_ds_class->get_state();
 		change_state(wrapper, JaiGenicamInitState::Instance());
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -529,19 +529,19 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamDisconnectedState::close_camera(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "JaiGenicamState close camera" << std::endl;
+		cout << "JaiGenicamState close camera" << std::endl;
 		J_STATUS_TYPE   retval;
 		if (wrapper->camera_handle != NULL)
 		{
 			retval = J_Camera_Close(wrapper->camera_handle);
 			if (retval != J_ST_SUCCESS)
 			{
-				std::cout <<  "Could not close camera! " << wrapper->get_error_string(retval) << std::endl;
+				cout <<  "Could not close camera! " << wrapper->get_error_string(retval) << std::endl;
 				return retval;
 			}
 			else
 			{
-				std::cout << "Camera closed." << std::endl;
+				cout << "Camera closed." << std::endl;
 				wrapper->camera_handle = NULL;
 			}			
 		}
@@ -550,19 +550,19 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamDisconnectedState::close_factory(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "JaiGenicamDisconnectedState close factory" << std::endl;
+		cout << "JaiGenicamDisconnectedState close factory" << std::endl;
 		J_STATUS_TYPE   retval;
 		if (wrapper->factory_handle != NULL)
 		{
 			retval = J_Factory_Close(wrapper->factory_handle);
 			if (retval != J_ST_SUCCESS)
 			{
-				std::cout <<  "Could not close factory! " << wrapper->get_error_string(retval) << std::endl;
+				cout <<  "Could not close factory! " << wrapper->get_error_string(retval) << std::endl;
 				return retval;
 			}
 			else
 			{
-				std::cout << "Factory closed." << std::endl;
+				cout << "Factory closed." << std::endl;
 				wrapper->factory_handle = NULL;
 			}
 		}
@@ -576,7 +576,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamInitState::enter( JaiGenicamConnection* wrapper )
 	{
-		std::cout << "Entering INIT state" << std::endl;
+		cout << "Entering INIT state" << std::endl;
 		wrapper->tango_ds_class->set_state(Tango::DevState::UNKNOWN);
 		wrapper->run();
 		this->disable_auto_nodes(wrapper);
@@ -585,7 +585,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamInitState::run(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "Attempting connection" << std::endl;
+		cout << "Attempting connection" << std::endl;
 		wrapper->tango_state = wrapper->tango_ds_class->get_state();
 
 		J_STATUS_TYPE   retval;
@@ -599,7 +599,7 @@ namespace JaiGenicamConnection_ns
 			retval = J_Factory_Open((int8_t*)"" , &wrapper->factory_handle);
 			if (retval != J_ST_SUCCESS)
 			{
-				std::cout << "Could not open factory!" << wrapper->get_error_string(retval) << std::endl;
+				cout << "Could not open factory!" << wrapper->get_error_string(retval) << std::endl;
 				change_state(wrapper, JaiGenicamDisconnectedState::Instance());
 				return retval;
 			}
@@ -609,31 +609,31 @@ namespace JaiGenicamConnection_ns
 		retval = J_Factory_UpdateCameraList(wrapper->factory_handle, &has_changed);
 		if (retval != J_ST_SUCCESS)
 		{
-			std::cout << "Could not update camera list!" << wrapper->get_error_string(retval) << std::endl;
+			cout << "Could not update camera list!" << wrapper->get_error_string(retval) << std::endl;
 			change_state(wrapper, JaiGenicamDisconnectedState::Instance());
 			return retval;
 		}
 		else
 		{
-			std::cout << "Camera list updated." << std::endl;
+			cout << "Camera list updated." << std::endl;
 		}
 
 		// Get the number of Cameras
 		retval = J_Factory_GetNumOfCameras(wrapper->factory_handle, &n_cameras);
 		if (retval != J_ST_SUCCESS)
 		{
-			std::cout << "Failure getting number of cameras!" << wrapper->get_error_string(retval) << std::endl;
+			cout << "Failure getting number of cameras!" << wrapper->get_error_string(retval) << std::endl;
 			change_state(wrapper, JaiGenicamDisconnectedState::Instance());
 			return retval;
 		}
 		else
 		{
-			std::cout << "Found " << n_cameras << " cameras" << std::endl;
+			cout << "Found " << n_cameras << " cameras" << std::endl;
 		}
 
 		if (n_cameras == 0)
 		{
-			std::cout << "No cameras were found." << wrapper->get_error_string(retval) << std::endl;
+			cout << "No cameras were found." << wrapper->get_error_string(retval) << std::endl;
 			change_state(wrapper, JaiGenicamDisconnectedState::Instance());
 			return retval;
 		}
@@ -647,41 +647,41 @@ namespace JaiGenicamConnection_ns
 
 		for (int i=0; i<n_cameras; i++)
 		{
-			std::cout << "============================================" << std::endl;
+			cout << "============================================" << std::endl;
 
 			size_ci = (uint32_t)sizeof(s_camera_info);
 			size = (uint32_t)sizeof(camera_id_s);
 			retval = J_Factory_GetCameraIDByIndex(wrapper->factory_handle, i, camera_id_s, &size);
 			if (retval != J_ST_SUCCESS)
 			{
-				std::cout <<  "Could not get the camera ID!" << wrapper->get_error_string(retval) << std::endl;
+				cout <<  "Could not get the camera ID!" << wrapper->get_error_string(retval) << std::endl;
 				return retval;
 			}
 			else
 			{
-				std::cout << "Camera " << i << " ID: " << camera_id_s << std::endl;
+				cout << "Camera " << i << " ID: " << camera_id_s << std::endl;
 			}
 
 			retval = J_Factory_GetCameraInfo(wrapper->factory_handle, camera_id_s, CAM_INFO_SERIALNUMBER, s_camera_info, &size_ci);
 			if (retval != J_ST_SUCCESS)
 			{
-				std::cout <<  "Could not get the camera info!" << wrapper->get_error_string(retval) << std::endl;
+				cout <<  "Could not get the camera info!" << wrapper->get_error_string(retval) << std::endl;
 				return retval;
 			}
 			else
 			{
-				std::cout << "Camera " << i << " serial number: " << s_camera_info << std::endl;
+				cout << "Camera " << i << " serial number: " << s_camera_info << std::endl;
 			}
 			std::string serial_string;
 			for (int k=0; k<size_ci-1; k++)
 			{
 				serial_string += (char)s_camera_info[k];
 			}
-			std::cout << "Target serial: " << target_serial << ", this camera " << serial_string << std::endl;
+			cout << "Target serial: " << target_serial << ", this camera " << serial_string << std::endl;
 			if (target_serial == serial_string)
 			{
 				camera_found = true;
-				std::cout << "Found camera with serial " << target_serial << ", index " << i << std::endl;
+				cout << "Found camera with serial " << target_serial << ", index " << i << std::endl;
 				break;
 			}
 		}
@@ -697,13 +697,13 @@ namespace JaiGenicamConnection_ns
 			retval = J_Camera_Open(wrapper->factory_handle, camera_id_s, &wrapper->camera_handle);
 			if (retval != J_ST_SUCCESS)
 			{
-				std::cout <<  "Could not open camera!" << wrapper->get_error_string(retval) << std::endl;
+				cout <<  "Could not open camera!" << wrapper->get_error_string(retval) << std::endl;
 				change_state(wrapper, JaiGenicamDisconnectedState::Instance());
 				return retval;
 			}
 			else
 			{
-				std::cout << "Camera open." << std::endl;
+				cout << "Camera open." << std::endl;
 			}
 		}
 
@@ -713,7 +713,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamInitState::disable_auto_nodes(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "JaiGenicamInitState::disable_auto_nodes" << std::endl;
+		cout << "JaiGenicamInitState::disable_auto_nodes" << std::endl;
 		
 		J_STATUS_TYPE		retval;
 		J_NODE_TYPE			node_type;
@@ -734,10 +734,10 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting number of nodes, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
-		std::cout << "Found " << n_nodes << " nodes." << std::endl;
+		cout << "Found " << n_nodes << " nodes." << std::endl;
 
 		for (int i_node=0; i_node < n_nodes; i_node++)
 		{
@@ -745,7 +745,7 @@ namespace JaiGenicamConnection_ns
 			if (retval != J_ST_SUCCESS)
 			{ 
 				err_msg <<  "Failure getting node index " << i_node << ", returned " << wrapper->get_error_string(retval) ;
-				std::cout << err_msg.str() << std::endl;
+				cout << err_msg.str() << std::endl;
 				return retval;
 			}
 			char_buffer_size = 512;
@@ -753,7 +753,7 @@ namespace JaiGenicamConnection_ns
 			if (retval != J_ST_SUCCESS)
 			{ 
 				err_msg <<  "Failure getting node name for index " << i_node << ", returned " << wrapper->get_error_string(retval) ;
-				std::cout << err_msg.str() << std::endl;
+				cout << err_msg.str() << std::endl;
 				return retval;
 			}
 			node_name = char_buffer_p;
@@ -761,7 +761,7 @@ namespace JaiGenicamConnection_ns
 			found_pos = node_name.find(auto_name);
 			if (found_pos != node_name.npos)
 			{
-				std::cout << "Found name with auto: " << node_name << "." << std::endl;
+				cout << "Found name with auto: " << node_name << "." << std::endl;
 				for (auto & off_name : off_names)
 				{
 					found_pos = node_name.find(off_name);
@@ -770,7 +770,7 @@ namespace JaiGenicamConnection_ns
 						J_Node_GetType(h_node, &node_type);
 						if (node_type == J_IEnumeration)
 						{
-							std::cout << "Turning off." << std::endl;
+							cout << "Turning off." << std::endl;
 							int_value = 0;
 							retval = J_Node_SetValueInt64(h_node, true, int_value);
 						}
@@ -790,7 +790,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamConnectedState::enter( JaiGenicamConnection* wrapper )
 	{
-		std::cout << "Entering CONNECTED state" << std::endl;
+		cout << "Entering CONNECTED state" << std::endl;
 		wrapper->tango_ds_class->set_state(Tango::DevState::ON);
 
 		int retval;
@@ -818,7 +818,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamConnectedState::stop_capture(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "Stopping aquisition" << std::endl;
+		cout << "Stopping aquisition" << std::endl;
 
 		J_STATUS_TYPE retval;
 		std::stringstream err_msg;
@@ -832,7 +832,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg << "Could not Stop Acquisition! " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 			}
@@ -844,7 +844,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg << "Could not close Stream!! " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				wrapper->capture_thread_handle = NULL;
@@ -857,7 +857,7 @@ namespace JaiGenicamConnection_ns
 	template<typename T>
 	int JaiGenicamConnectedState::get_node(JaiGenicamConnection* wrapper, GenicamNode<T>* node)
 	{
-		std::cout << "JaiGenicamConnectedState::get_node for " << node->name << " of type " << node->type << std::endl;
+		cout << "JaiGenicamConnectedState::get_node for " << node->name << " of type " << node->type << std::endl;
 		
 		J_NODE_TYPE			node_type;
 		J_STATUS_TYPE		retval;
@@ -875,7 +875,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << node->name << ", returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		
@@ -884,7 +884,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node description, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			
 		}
 		else
@@ -897,7 +897,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node unit, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;			
+			cout << err_msg.str() << std::endl;			
 		}
 		else
 		{
@@ -908,10 +908,10 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
-//		std::cout << "Node type " << (int)node_type << std::endl;
+//		cout << "Node type " << (int)node_type << std::endl;
 		switch (node_type)
 		{
 			case J_IInteger:
@@ -921,23 +921,23 @@ namespace JaiGenicamConnection_ns
 			case J_IIntReg:
 			{
 				// It was an integer value
-//				std::cout << "Node type integer" << std::endl;
+//				cout << "Node type integer" << std::endl;
 				// Get actual value:
 				retval = J_Node_GetValueInt64(h_node, true, &int_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->value = int_value;
-//				std::cout << "Current value: " << int_value << std::endl;
+//				cout << "Current value: " << int_value << std::endl;
 				// Get min value:
 				retval = J_Node_GetMinInt64(h_node, &int_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int min value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->min_value = int_value;
@@ -946,7 +946,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int max value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->max_value = int_value;
@@ -958,24 +958,24 @@ namespace JaiGenicamConnection_ns
 			case J_ISwissKnife:
 			{
 				// It was a float value
-//				std::cout << "Node type float" << std::endl;
+//				cout << "Node type float" << std::endl;
 
 				// Get actual value:
 				retval = J_Node_GetValueDouble(h_node, true, &double_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->value = double_value;
-//				std::cout << "Current value: " << double_value << std::endl;
+//				cout << "Current value: " << double_value << std::endl;
 				// Get min value:
 				retval = J_Node_GetMinDouble(h_node, &double_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double min value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->min_value = double_value;
@@ -984,7 +984,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double max value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->max_value = double_value;			
@@ -996,26 +996,26 @@ namespace JaiGenicamConnection_ns
 			case J_IEnumEntry:
 				{
 					// It was an integer value
-//					std::cout << "Node type enum" << std::endl;
+//					cout << "Node type enum" << std::endl;
 					// Get actual value:
 					retval = J_Node_GetValueInt64(h_node, true, &int_value);				
 					if (retval != J_ST_SUCCESS)
 					{
 						err_msg <<  "Failure getting enum value, returned " << wrapper->get_error_string(retval) ;
-						std::cout << err_msg.str() << std::endl;
+						cout << err_msg.str() << std::endl;
 						return retval;
 					}
 					node->value = int_value;
-					std::cout << "Current value: " << int_value << std::endl;
+					cout << "Current value: " << int_value << std::endl;
 					
 					uint32_t num_enum = 0;
 					retval = J_Node_GetNumOfEnumEntries(h_node, &num_enum);
 					if (retval != J_ST_SUCCESS)
 					{
 						err_msg <<  "Failure getting number of enum entries, returned " << wrapper->get_error_string(retval) ;
-						std::cout << err_msg.str() << std::endl;						
+						cout << err_msg.str() << std::endl;						
 					}
-					std::cout << "Number of enum entries: " << num_enum << std::endl;
+					cout << "Number of enum entries: " << num_enum << std::endl;
 
 					NODE_HANDLE enum_entry;
 					J_NODE_ACCESSMODE access_mode;
@@ -1026,7 +1026,7 @@ namespace JaiGenicamConnection_ns
 						if (retval != J_ST_SUCCESS)
 						{
 							err_msg <<  "Failure getting enum entry " << j << ", returned " << wrapper->get_error_string(retval) ;
-							std::cout << err_msg.str() << std::endl;						
+							cout << err_msg.str() << std::endl;						
 						}
 						else
 						{
@@ -1035,18 +1035,18 @@ namespace JaiGenicamConnection_ns
 							if (retval != J_ST_SUCCESS)
 							{
 								err_msg <<  "Failure getting enum entry node name, returned " << wrapper->get_error_string(retval) ;
-								std::cout << err_msg.str() << std::endl;
+								cout << err_msg.str() << std::endl;
 			
 							}
 							else
 							{
-								std::cout << "Enum entry " << j << ": " << char_buffer_p << std::endl;
+								cout << "Enum entry " << j << ": " << char_buffer_p << std::endl;
 							}
 							retval = J_Node_GetAccessMode(enum_entry, &access_mode);
 							if (retval != J_ST_SUCCESS)
 							{
 								err_msg <<  "Failure getting enum entry node access mode, returned " << wrapper->get_error_string(retval) ;
-								std::cout << err_msg.str() << std::endl;
+								cout << err_msg.str() << std::endl;
 			
 							}
 							else
@@ -1076,7 +1076,7 @@ namespace JaiGenicamConnection_ns
 			default:
 				node->valid = false;
 		}; // switch (node_type)
-		std::cout << "Node description: " << node->description << std::endl;
+		cout << "Node description: " << node->description << std::endl;
 		return 0;
 	}; // JaiGenicamConnectedState::get_node
 
@@ -1092,19 +1092,19 @@ namespace JaiGenicamConnection_ns
 		string				string_value;		
 		double				double_value;
 
-		std::cout << "get_node_value for node named " << name.c_str() << std::endl;
+		cout << "get_node_value for node named " << name.c_str() << std::endl;
 		retval = J_Camera_GetNodeByName(wrapper->camera_handle, (int8_t*)name.c_str(), &h_node);
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << name << ", returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		retval = J_Node_GetType(h_node, &node_type);
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		// Check if the node type is compatible and select the correct get_ function
@@ -1120,14 +1120,14 @@ namespace JaiGenicamConnection_ns
 		else
 		{
 			err_msg <<  "Wrong node type, should be " << J_IFloat << " (double) or " << J_IInteger << " (integer), is " << node_type ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return -1;
 		}
 		
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node value, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		return 0;
@@ -1140,19 +1140,19 @@ namespace JaiGenicamConnection_ns
 		std::stringstream	err_msg;
 		NODE_HANDLE			h_node;
 
-		std::cout << "get_node_value integer for node named " << name.c_str() << std::endl;
+		cout << "get_node_value integer for node named " << name.c_str() << std::endl;
 		retval = J_Camera_GetNodeByName(wrapper->camera_handle, (int8_t*)name.c_str(), &h_node);
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << name << ", returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		retval = J_Node_GetType(h_node, &node_type);
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		if (node_type != J_IInteger)
@@ -1160,7 +1160,7 @@ namespace JaiGenicamConnection_ns
 			if (node_type != J_IEnumeration)
 			{
 				err_msg <<  "Wrong type, should be " << J_IInteger << " (integer) or " << J_IEnumeration << ", is " << node_type ;
-				std::cout << err_msg.str() << std::endl;
+				cout << err_msg.str() << std::endl;
 				return -1;
 			}
 		}
@@ -1168,7 +1168,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node value, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		return 0;
@@ -1186,19 +1186,19 @@ namespace JaiGenicamConnection_ns
 		string				string_value;		
 		double				double_value;
 
-		std::cout << "set_node_value for node named " << name.c_str() << std::endl;
+		cout << "set_node_value for node named " << name.c_str() << std::endl;
 		retval = J_Camera_GetNodeByName(wrapper->camera_handle, (int8_t*)name.c_str(), &h_node);
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << name << ", returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		retval = J_Node_GetType(h_node, &node_type);
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		// Check if the node type is compatible and select the correct get_ function
@@ -1219,14 +1219,14 @@ namespace JaiGenicamConnection_ns
 		else
 		{
 			err_msg <<  "Wrong node type, should be " << J_IFloat << " (double), " << J_IInteger << " (integer), or "<< J_IEnumeration << " (enumeration) - this is " << node_type ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return -1;
 		}
 		
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node value, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		return 0;
@@ -1243,14 +1243,14 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << name << ", returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		retval = J_Node_GetType(h_node, &node_type);
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		switch (node_type)
@@ -1273,7 +1273,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamConnectedState::get_node_info(JaiGenicamConnection* wrapper, std::string name, GenicamGenericNode* generic_node_p)
 	{
-//		std::cout << "JaiGenicamConnectedState::get_node_info for " << name << std::endl;
+//		cout << "JaiGenicamConnectedState::get_node_info for " << name << std::endl;
 		generic_node_p->name = name;
 		
 		J_NODE_TYPE			node_type;
@@ -1292,7 +1292,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << name << ", returned " << wrapper->get_error_string(retval) << std::endl;
-			std::cout << err_msg.str();
+			cout << err_msg.str();
 			return retval;
 		}
 		
@@ -1301,7 +1301,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node description, returned " << wrapper->get_error_string(retval) << std::endl;
-			std::cout << err_msg.str();
+			cout << err_msg.str();
 			generic_node_p->description = "";
 			
 		}
@@ -1315,7 +1315,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node unit, returned " << wrapper->get_error_string(retval) << std::endl;
-			std::cout << err_msg.str();	
+			cout << err_msg.str();	
 			generic_node_p->unit = "";
 		}
 		else
@@ -1327,10 +1327,10 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) << std::endl;
-			std::cout << err_msg.str();
+			cout << err_msg.str();
 			return retval;
 		}
-//		std::cout << "Node type " << (int)node_type << std::endl;
+//		cout << "Node type " << (int)node_type << std::endl;
 		switch (node_type)
 		{
 			case J_IInteger:
@@ -1340,24 +1340,24 @@ namespace JaiGenicamConnection_ns
 			case J_IIntReg:
 			{
 				// It was an integer value
-//				std::cout << "Node type integer" << std::endl;
+//				cout << "Node type integer" << std::endl;
 				generic_node_p->type = J_NODE_TYPE::J_IInteger;
 				// Get actual value:
 				retval = J_Node_GetValueInt64(h_node, true, &int_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->value_i = int_value;
-//				std::cout << "Current value: " << int_value << std::endl;
+//				cout << "Current value: " << int_value << std::endl;
 				// Get min value:
 				retval = J_Node_GetMinInt64(h_node, &int_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int min value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->min_value_i = int_value;
@@ -1367,7 +1367,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int max value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->max_value_i = int_value;
@@ -1381,24 +1381,24 @@ namespace JaiGenicamConnection_ns
 			{
 				// It was a float value
 				generic_node_p->type = J_NODE_TYPE::J_IFloat;
-//				std::cout << "Node type float" << std::endl;
+//				cout << "Node type float" << std::endl;
 
 				// Get actual value:
 				retval = J_Node_GetValueDouble(h_node, true, &double_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->value_d = double_value;
-//				std::cout << "Current value: " << double_value << std::endl;
+//				cout << "Current value: " << double_value << std::endl;
 				// Get min value:
 				retval = J_Node_GetMinDouble(h_node, &double_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double min value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->min_value_d = double_value;
@@ -1408,7 +1408,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double max value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->max_value_d = double_value;
@@ -1422,17 +1422,17 @@ namespace JaiGenicamConnection_ns
 				{
 					// It was an enumeration value
 					generic_node_p->type = J_NODE_TYPE::J_IEnumeration;
-//					std::cout << "Node type enum" << std::endl;
+//					cout << "Node type enum" << std::endl;
 					// Get actual value:
 					retval = J_Node_GetValueInt64(h_node, true, &int_value);				
 					if (retval != J_ST_SUCCESS)
 					{
 						err_msg <<  "Failure getting enum value, returned " << wrapper->get_error_string(retval) << std::endl;
-						std::cout << err_msg.str();
+						cout << err_msg.str();
 						return retval;
 					}
 					generic_node_p->value_i = int_value;
-//					std::cout << "Current value: " << int_value << std::endl;
+//					cout << "Current value: " << int_value << std::endl;
 					
 					uint32_t num_enum = 0;
 					retval = J_Node_GetNumOfEnumEntries(h_node, &num_enum);
@@ -1441,7 +1441,7 @@ namespace JaiGenicamConnection_ns
 						err_msg <<  "Failure getting number of enum entries, returned " << wrapper->get_error_string(retval) << std::endl;
 						
 					}
-//					std::cout << "Number of enum entries: " << num_enum << std::endl;
+//					cout << "Number of enum entries: " << num_enum << std::endl;
 
 					// Building the list of available enum values
 					NODE_HANDLE enum_entry;
@@ -1457,7 +1457,7 @@ namespace JaiGenicamConnection_ns
 						if (retval != J_ST_SUCCESS)
 						{
 							err_msg <<  "Failure getting enum entry " << j << ", returned " << wrapper->get_error_string(retval) << std::endl;
-							std::cout << err_msg.str();						
+							cout << err_msg.str();						
 						}
 						else
 						{
@@ -1466,18 +1466,18 @@ namespace JaiGenicamConnection_ns
 							if (retval != J_ST_SUCCESS)
 							{
 								err_msg <<  "Failure getting enum entry node name, returned " << wrapper->get_error_string(retval) << std::endl;
-								std::cout << err_msg.str();
+								cout << err_msg.str();
 			
 							}
 							else
 							{
-								std::cout << "Enum entry " << j << ": " << char_buffer_p << std::endl;
+								cout << "Enum entry " << j << ": " << char_buffer_p << std::endl;
 							}
 							retval = J_Node_GetAccessMode(enum_entry, &access_mode);
 							if (retval != J_ST_SUCCESS)
 							{
 								err_msg <<  "Failure getting enum entry node access mode, returned " << wrapper->get_error_string(retval) << std::endl;
-								std::cout << err_msg.str();
+								cout << err_msg.str();
 			
 							}
 							else
@@ -1492,7 +1492,7 @@ namespace JaiGenicamConnection_ns
 									entry_map_string = char_buffer_p+9+2+generic_node_p->name.length();
 //									desc_stream << "Enum index " << j << ": " << char_buffer_p << ", value " << int_value << std::endl;
 									desc_stream << char_buffer_p+9+2+generic_node_p->name.length() << ", ";
-//									std::cout << "Cut enum name: " << entry_map_string << std::endl;
+//									cout << "Cut enum name: " << entry_map_string << std::endl;
 									generic_node_p->enum_names.push_back(char_buffer_p+9+2+generic_node_p->name.length());
 									generic_node_p->enum_entry_map[entry_map_string] = int_value;
 									generic_node_p->enum_value_map[int_value] = char_buffer_p+9+2+generic_node_p->name.length();
@@ -1514,7 +1514,7 @@ namespace JaiGenicamConnection_ns
 			default:
 				generic_node_p->valid = false;
 		}; // switch (node_type)
-//		std::cout << "Node description: " << generic_node_p->description << std::endl;
+//		cout << "Node description: " << generic_node_p->description << std::endl;
 		return 0;
 	}; // JaiGenicamConnectedState::get_node_info
 	
@@ -1527,7 +1527,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamRunningState::enter( JaiGenicamConnection* wrapper )
 	{
-		std::cout << "Entering RUNNING state" << std::endl;
+		cout << "Entering RUNNING state" << std::endl;
 		wrapper->tango_ds_class->set_state(Tango::DevState::RUNNING);
 		int retval;
 		retval = this->start_capture(wrapper);
@@ -1558,7 +1558,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamRunningState::execute_start_capture(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "Starting aquisition" << std::endl;
+		cout << "Starting aquisition" << std::endl;
 
 		J_STATUS_TYPE   retval;
 		std::stringstream err_msg;
@@ -1572,7 +1572,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg << "Could not stop aquisition! " << wrapper->get_error_string(retval);
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				// Close stream
@@ -1580,7 +1580,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg << "Could not close Stream!! " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				wrapper->capture_thread_handle = NULL;				
@@ -1593,7 +1593,7 @@ namespace JaiGenicamConnection_ns
 			retval = J_Image_Get_PixelFormat(wrapper->camera_handle, wrapper->pixelformat_node.value, &jaiPixelFormat);
 			if (retval != J_ST_SUCCESS) {
 				err_msg << "Could not get pixelformat! " << wrapper->get_error_string(retval);
-				std::cout << err_msg.str() << std::endl;
+				cout << err_msg.str() << std::endl;
 				return retval;
 			}
 
@@ -1604,7 +1604,7 @@ namespace JaiGenicamConnection_ns
 			retval = this->get_node(wrapper, &wrapper->imageheight_node);
 			int64_t image_height = wrapper->imageheight_node.value;
 
-			std::cout << "Image parameters: " << std::endl << "  height..." << image_height << std::endl << "   width..." << image_width
+			cout << "Image parameters: " << std::endl << "  height..." << image_height << std::endl << "   width..." << image_width
 				<< std::endl << "     bpp..." << bpp << std::endl << "    size..." << (image_height*image_width*bpp)/8 << std::endl;
 
 			// Open stream
@@ -1614,7 +1614,7 @@ namespace JaiGenicamConnection_ns
 				&wrapper->capture_thread_handle, (image_height*image_width*bpp)/8);
 			if (retval != J_ST_SUCCESS) {
 				err_msg << "Could not open stream! " << wrapper->get_error_string(retval);
-				std::cout << err_msg.str() << std::endl;
+				cout << err_msg.str() << std::endl;
 				return retval;
 			}
 
@@ -1623,7 +1623,7 @@ namespace JaiGenicamConnection_ns
 			if (retval != J_ST_SUCCESS)
 			{
 				err_msg << "Could not start aquisition! " << wrapper->get_error_string(retval);
-				std::cout << err_msg.str() << std::endl;
+				cout << err_msg.str() << std::endl;
 				return retval;
 			}
 		lock.unlock();
@@ -1639,7 +1639,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamRunningState::close_camera(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "JaiGenicamRunningState close camera" << std::endl;
+		cout << "JaiGenicamRunningState close camera" << std::endl;
 		J_STATUS_TYPE   retval;
 		std::stringstream err_msg;
 
@@ -1651,7 +1651,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg << "Could not Stop Acquisition! " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 			}
@@ -1663,7 +1663,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg << "Could not close Stream!! " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				wrapper->capture_thread_handle = NULL;
@@ -1675,14 +1675,14 @@ namespace JaiGenicamConnection_ns
 			retval = J_Camera_Close(wrapper->camera_handle);
 			if (retval != J_ST_SUCCESS)
 			{
-				std::cout <<  "Could not close camera! " << wrapper->get_error_string(retval) << std::endl;
+				cout <<  "Could not close camera! " << wrapper->get_error_string(retval) << std::endl;
 			}
 			else
 			{
-				std::cout << "Camera closed." << std::endl;
+				cout << "Camera closed." << std::endl;
 				wrapper->camera_handle = NULL;
 			}
-			std::cout << "Changing state to disconnected." << std::endl;
+			cout << "Changing state to disconnected." << std::endl;
 			change_state(wrapper, JaiGenicamDisconnectedState::Instance());
 		}
 		return 0;
@@ -1692,7 +1692,7 @@ namespace JaiGenicamConnection_ns
 	template<typename T>
 	int JaiGenicamRunningState::get_node(JaiGenicamConnection* wrapper, GenicamNode<T>* node)
 	{
-		std::cout << "JaiGenicamConnectedState::get_node for " << node->name << " of type " << node->type << std::endl;
+		cout << "JaiGenicamConnectedState::get_node for " << node->name << " of type " << node->type << std::endl;
 		
 		J_NODE_TYPE			node_type;
 		J_STATUS_TYPE		retval;
@@ -1707,7 +1707,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << node->name << ", returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 //			throw std::invalid_argument(err_msg.str().c_str());
 		}
@@ -1715,10 +1715,10 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
-		std::cout << "Node type " << (int)node_type << std::endl;
+		cout << "Node type " << (int)node_type << std::endl;
 		switch (node_type)
 		{
 			case J_IInteger:
@@ -1728,23 +1728,23 @@ namespace JaiGenicamConnection_ns
 			case J_IIntReg:
 			{
 				// It was an integer value
-				std::cout << "Node type integer" << std::endl;
+				cout << "Node type integer" << std::endl;
 				// Get actual value:
 				retval = J_Node_GetValueInt64(h_node, true, &int_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->value = int_value;
-				std::cout << "Current value: " << int_value << std::endl;
+				cout << "Current value: " << int_value << std::endl;
 				// Get min value:
 				retval = J_Node_GetMinInt64(h_node, &int_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int min value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->min_value = int_value;
@@ -1753,7 +1753,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int max value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->max_value = int_value;
@@ -1765,24 +1765,24 @@ namespace JaiGenicamConnection_ns
 			case J_ISwissKnife:
 			{
 				// It was a float value
-				std::cout << "Node type float" << std::endl;
+				cout << "Node type float" << std::endl;
 
 				// Get actual value:
 				retval = J_Node_GetValueDouble(h_node, true, &double_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->value = double_value;
-				std::cout << "Current value: " << double_value << std::endl;
+				cout << "Current value: " << double_value << std::endl;
 				// Get min value:
 				retval = J_Node_GetMinDouble(h_node, &double_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double min value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->min_value = double_value;
@@ -1791,7 +1791,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double max value, returned " << wrapper->get_error_string(retval) ;
-					std::cout << err_msg.str() << std::endl;
+					cout << err_msg.str() << std::endl;
 					return retval;
 				}
 				node->max_value = double_value;			
@@ -1803,17 +1803,17 @@ namespace JaiGenicamConnection_ns
 			case J_IEnumEntry:
 				{
 					// It was an integer value
-					std::cout << "Node type enum" << std::endl;
+					cout << "Node type enum" << std::endl;
 					// Get actual value:
 					retval = J_Node_GetValueInt64(h_node, true, &int_value);				
 					if (retval != J_ST_SUCCESS)
 					{
 						err_msg <<  "Failure getting enum value, returned " << wrapper->get_error_string(retval) ;
-						std::cout << err_msg.str() << std::endl;
+						cout << err_msg.str() << std::endl;
 						return retval;
 					}
 					node->value = int_value;
-					std::cout << "Current value: " << int_value << std::endl;
+					cout << "Current value: " << int_value << std::endl;
 					
 					node->valid = true;
 					break;
@@ -1838,19 +1838,19 @@ namespace JaiGenicamConnection_ns
 		string				string_value;		
 		double				double_value;
 
-//		std::cout << "get_node_value for node named " << name.c_str() << std::endl;
+//		cout << "get_node_value for node named " << name.c_str() << std::endl;
 		retval = J_Camera_GetNodeByName(wrapper->camera_handle, (int8_t*)name.c_str(), &h_node);
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << name << ", returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		retval = J_Node_GetType(h_node, &node_type);
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		// Check if the node type is compatible and select the correct get_ function
@@ -1866,14 +1866,14 @@ namespace JaiGenicamConnection_ns
 		else
 		{
 			err_msg <<  "Wrong node type, should be " << J_IFloat << " (double) or " << J_IInteger << " (integer), is " << node_type ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return -1;
 		}
 		
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node value, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		return 0;
@@ -1886,19 +1886,19 @@ namespace JaiGenicamConnection_ns
 		std::stringstream	err_msg;
 		NODE_HANDLE			h_node;
 
-//		std::cout << "get_node_value integer for node named " << name.c_str() << std::endl;
+//		cout << "get_node_value integer for node named " << name.c_str() << std::endl;
 		retval = J_Camera_GetNodeByName(wrapper->camera_handle, (int8_t*)name.c_str(), &h_node);
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << name << ", returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		retval = J_Node_GetType(h_node, &node_type);
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		if (node_type != J_IInteger)
@@ -1906,7 +1906,7 @@ namespace JaiGenicamConnection_ns
 			if (node_type != J_IEnumeration)
 			{
 				err_msg <<  "Wrong type, should be " << J_IInteger << " (integer) or " << J_IEnumeration << ", is " << node_type ;
-				std::cout << err_msg.str() << std::endl;
+				cout << err_msg.str() << std::endl;
 				return -1;
 			}
 		}
@@ -1914,7 +1914,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node value, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		return 0;
@@ -1932,19 +1932,19 @@ namespace JaiGenicamConnection_ns
 		string				string_value;		
 		double				double_value;
 
-		std::cout << "set_node_value for node named " << name.c_str() << std::endl;
+		cout << "set_node_value for node named " << name.c_str() << std::endl;
 		retval = J_Camera_GetNodeByName(wrapper->camera_handle, (int8_t*)name.c_str(), &h_node);
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << name << ", returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		retval = J_Node_GetType(h_node, &node_type);
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		// Check if the node type is compatible and select the correct get_ function
@@ -1965,14 +1965,14 @@ namespace JaiGenicamConnection_ns
 		else
 		{
 			err_msg <<  "Wrong node type, should be " << J_IFloat << " (double), " << J_IInteger << " (integer), or "<< J_IEnumeration << " (enumeration) - this is " << node_type ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return -1;
 		}
 		
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node value, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		return 0;
@@ -1989,14 +1989,14 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << name << ", returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		retval = J_Node_GetType(h_node, &node_type);
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) ;
-			std::cout << err_msg.str() << std::endl;
+			cout << err_msg.str() << std::endl;
 			return retval;
 		}
 		switch (node_type)
@@ -2019,7 +2019,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamRunningState::get_node_info(JaiGenicamConnection* wrapper, std::string name, GenicamGenericNode* generic_node_p)
 	{
-//		std::cout << "JaiGenicamConnectedState::get_node_info for " << name << std::endl;
+//		cout << "JaiGenicamConnectedState::get_node_info for " << name << std::endl;
 		generic_node_p->name = name;
 		
 		J_NODE_TYPE			node_type;
@@ -2038,7 +2038,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{ 
 			err_msg <<  "Failure getting node " << name << ", returned " << wrapper->get_error_string(retval) << std::endl;
-			std::cout << err_msg.str();
+			cout << err_msg.str();
 			return retval;
 		}
 		
@@ -2047,7 +2047,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node description, returned " << wrapper->get_error_string(retval) << std::endl;
-			std::cout << err_msg.str();
+			cout << err_msg.str();
 			generic_node_p->description = "";
 			
 		}
@@ -2061,7 +2061,7 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting node unit, returned " << wrapper->get_error_string(retval) << std::endl;
-			std::cout << err_msg.str();	
+			cout << err_msg.str();	
 			generic_node_p->unit = "";
 		}
 		else
@@ -2073,10 +2073,10 @@ namespace JaiGenicamConnection_ns
 		if (retval != J_ST_SUCCESS)
 		{
 			err_msg <<  "Failure getting type, returned " << wrapper->get_error_string(retval) << std::endl;
-			std::cout << err_msg.str();
+			cout << err_msg.str();
 			return retval;
 		}
-//		std::cout << "Node type " << (int)node_type << std::endl;
+//		cout << "Node type " << (int)node_type << std::endl;
 		switch (node_type)
 		{
 			case J_IInteger:
@@ -2086,24 +2086,24 @@ namespace JaiGenicamConnection_ns
 			case J_IIntReg:
 			{
 				// It was an integer value
-//				std::cout << "Node type integer" << std::endl;
+//				cout << "Node type integer" << std::endl;
 				generic_node_p->type = J_NODE_TYPE::J_IInteger;
 				// Get actual value:
 				retval = J_Node_GetValueInt64(h_node, true, &int_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->value_i = int_value;
-//				std::cout << "Current value: " << int_value << std::endl;
+//				cout << "Current value: " << int_value << std::endl;
 				// Get min value:
 				retval = J_Node_GetMinInt64(h_node, &int_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int min value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->min_value_i = int_value;
@@ -2113,7 +2113,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting int max value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->max_value_i = int_value;
@@ -2127,24 +2127,24 @@ namespace JaiGenicamConnection_ns
 			{
 				// It was a float value
 				generic_node_p->type = J_NODE_TYPE::J_IFloat;
-//				std::cout << "Node type float" << std::endl;
+//				cout << "Node type float" << std::endl;
 
 				// Get actual value:
 				retval = J_Node_GetValueDouble(h_node, true, &double_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->value_d = double_value;
-//				std::cout << "Current value: " << double_value << std::endl;
+//				cout << "Current value: " << double_value << std::endl;
 				// Get min value:
 				retval = J_Node_GetMinDouble(h_node, &double_value);
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double min value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->min_value_d = double_value;
@@ -2154,7 +2154,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg <<  "Failure getting double max value, returned " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				generic_node_p->max_value_d = double_value;
@@ -2168,17 +2168,17 @@ namespace JaiGenicamConnection_ns
 				{
 					// It was an enumeration value
 					generic_node_p->type = J_NODE_TYPE::J_IEnumeration;
-//					std::cout << "Node type enum" << std::endl;
+//					cout << "Node type enum" << std::endl;
 					// Get actual value:
 					retval = J_Node_GetValueInt64(h_node, true, &int_value);				
 					if (retval != J_ST_SUCCESS)
 					{
 						err_msg <<  "Failure getting enum value, returned " << wrapper->get_error_string(retval) << std::endl;
-						std::cout << err_msg.str();
+						cout << err_msg.str();
 						return retval;
 					}
 					generic_node_p->value_i = int_value;
-//					std::cout << "Current value: " << int_value << std::endl;
+//					cout << "Current value: " << int_value << std::endl;
 					
 					uint32_t num_enum = 0;
 					retval = J_Node_GetNumOfEnumEntries(h_node, &num_enum);
@@ -2187,7 +2187,7 @@ namespace JaiGenicamConnection_ns
 						err_msg <<  "Failure getting number of enum entries, returned " << wrapper->get_error_string(retval) << std::endl;
 						
 					}
-//					std::cout << "Number of enum entries: " << num_enum << std::endl;
+//					cout << "Number of enum entries: " << num_enum << std::endl;
 
 					// Building the list of available enum values
 					NODE_HANDLE enum_entry;
@@ -2203,7 +2203,7 @@ namespace JaiGenicamConnection_ns
 						if (retval != J_ST_SUCCESS)
 						{
 							err_msg <<  "Failure getting enum entry " << j << ", returned " << wrapper->get_error_string(retval) << std::endl;
-							std::cout << err_msg.str();						
+							cout << err_msg.str();						
 						}
 						else
 						{
@@ -2212,18 +2212,18 @@ namespace JaiGenicamConnection_ns
 							if (retval != J_ST_SUCCESS)
 							{
 								err_msg <<  "Failure getting enum entry node name, returned " << wrapper->get_error_string(retval) << std::endl;
-								std::cout << err_msg.str();
+								cout << err_msg.str();
 			
 							}
 							else
 							{
-								std::cout << "Enum entry " << j << ": " << char_buffer_p << std::endl;
+								cout << "Enum entry " << j << ": " << char_buffer_p << std::endl;
 							}
 							retval = J_Node_GetAccessMode(enum_entry, &access_mode);
 							if (retval != J_ST_SUCCESS)
 							{
 								err_msg <<  "Failure getting enum entry node access mode, returned " << wrapper->get_error_string(retval) << std::endl;
-								std::cout << err_msg.str();
+								cout << err_msg.str();
 			
 							}
 							else
@@ -2238,7 +2238,7 @@ namespace JaiGenicamConnection_ns
 									entry_map_string = char_buffer_p+9+2+generic_node_p->name.length();
 //									desc_stream << "Enum index " << j << ": " << char_buffer_p << ", value " << int_value << std::endl;
 									desc_stream << char_buffer_p+9+2+generic_node_p->name.length() << ", ";
-//									std::cout << "Cut enum name: " << entry_map_string << std::endl;
+//									cout << "Cut enum name: " << entry_map_string << std::endl;
 									generic_node_p->enum_names.push_back(char_buffer_p+9+2+generic_node_p->name.length());
 									generic_node_p->enum_entry_map[entry_map_string] = int_value;
 									generic_node_p->enum_value_map[int_value] = char_buffer_p+9+2+generic_node_p->name.length();
@@ -2260,7 +2260,7 @@ namespace JaiGenicamConnection_ns
 			default:
 				generic_node_p->valid = false;
 		}; // switch (node_type)
-//		std::cout << "Node description: " << generic_node_p->description << std::endl;
+//		cout << "Node description: " << generic_node_p->description << std::endl;
 		return 0;
 	}; // JaiGenicamRunningState::get_node_info
 
@@ -2271,7 +2271,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamFaultState::enter( JaiGenicamConnection* wrapper )
 	{
-		std::cout << "Entering FAULT state" << std::endl;
+		cout << "Entering FAULT state" << std::endl;
 
 		int result;
 
@@ -2298,7 +2298,7 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamFaultState::stop_capture(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "Stopping aquisition" << std::endl;
+		cout << "Stopping aquisition" << std::endl;
 
 		J_STATUS_TYPE retval;
 		std::stringstream err_msg;
@@ -2312,7 +2312,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg << "Could not Stop Acquisition! " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 			}
@@ -2324,7 +2324,7 @@ namespace JaiGenicamConnection_ns
 				if (retval != J_ST_SUCCESS)
 				{
 					err_msg << "Could not close Stream!! " << wrapper->get_error_string(retval) << std::endl;
-					std::cout << err_msg.str();
+					cout << err_msg.str();
 					return retval;
 				}
 				wrapper->capture_thread_handle = NULL;
@@ -2335,19 +2335,19 @@ namespace JaiGenicamConnection_ns
 
 	int JaiGenicamFaultState::close_camera(JaiGenicamConnection* wrapper)
 	{
-		std::cout << "JaiGenicamFaultState close camera" << std::endl;
+		cout << "JaiGenicamFaultState close camera" << std::endl;
 		J_STATUS_TYPE   retval;
 		if (wrapper->camera_handle != NULL)
 		{
 			retval = J_Camera_Close(wrapper->camera_handle);
 			if (retval != J_ST_SUCCESS)
 			{
-				std::cout <<  "Could not close camera! " << wrapper->get_error_string(retval) << std::endl;
+				cout <<  "Could not close camera! " << wrapper->get_error_string(retval) << std::endl;
 				return retval;
 			}
 			else
 			{
-				std::cout << "Camera closed." << std::endl;
+				cout << "Camera closed." << std::endl;
 				wrapper->camera_handle = NULL;
 			}			
 		}

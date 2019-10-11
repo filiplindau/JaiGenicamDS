@@ -227,11 +227,11 @@ namespace JaiGenicamConnection_ns
 		{
 			if (_instance == NULL)
 			{
-				std::cout << "JaiGenicamDisconnectedState new instance" << std::endl;
+				cout << "JaiGenicamDisconnectedState new instance" << std::endl;
 				_instance = new JaiGenicamDisconnectedState;
 			}
 			else
-				std::cout << "JaiGenicamDisconnectedState old instance" << std::endl;
+				cout << "JaiGenicamDisconnectedState old instance" << std::endl;
 			return _instance;
 		};
 

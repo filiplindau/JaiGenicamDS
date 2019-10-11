@@ -43,4 +43,5 @@ obj/*
 *.suo
 *.sdf
 *.pdb
+*.opendb
 >>>>>>> github/master
